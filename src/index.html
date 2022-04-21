@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>Youtube Downloader</title>
+		<link rel="stylesheet" href="index.css" />
+		<script defer type="module" src="render.js"></script>
+	</head>
+	<body>
+		<h1>Youtube Downloader</h1>
+		<p>Paste a link and press load</p>
+		<input
+			class="url-input"
+			type="text"
+			value="https://www.youtube.com/watch?v=FTomDc1krk8&list=RDFTomDc1krk8&start_radio=1"
+			placeholder="Youtube-URL"
+		/>
+		<button class="button load">Load</button>
+
+		<div>
+			<img src="placeholder.png" alt="thumbnail" class="thumbnail" />
+			<div class="info">
+				<h2 class="video-title">Title</h2>
+				<h4 class="creator">from -</h4>
+        <span><a href="" class="video-link" target="_blank">visit Youtube</a></span>
+				<input
+					type="range"
+					class="timeline"
+					value="10"
+					max="100"
+					min="0"
+				/>
+			</div>
+      <div class="download-options">
+        <div class="times">
+          <span class="start">00:00</span>
+          <span class="end">00:00</span>
+        </div>
+        <button class="button download"> Download</button>
+      </div>
+		</div>
+	</body>
+</html>
