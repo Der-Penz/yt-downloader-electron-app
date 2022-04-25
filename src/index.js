@@ -12,11 +12,11 @@ const createWindow = () => {
 	const mainWindow = new BrowserWindow({
 		width: 800,
 		height: 600,
-		resizable: true,
+		resizable: false,
 		center: false,
 		closable: true,
-		frame: true,
-		hasShadow: true,
+		frame: false,
+		hasShadow: false,
 		webPreferences: {
 			nodeIntegration: true,
 			contextIsolation: false,

@@ -3,5 +3,4 @@ function formatSeconds(seconds) {
     date.setSeconds(seconds);
     return date.toISOString().substr(12, 7);
 }
-
 export { formatSeconds };

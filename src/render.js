@@ -4,7 +4,7 @@ import {
 	getVideoInfo,
 	isValidURL,
 } from './youtubeLibary.js';
-import choosePath from './explorerPath.js';
+import { choosePath, getStoragePath } from './explorerPath.js';
 import { formatSeconds } from './utilis.js';
 
 const remote = require('@electron/remote');
@@ -13,6 +13,10 @@ const window = remote.getCurrentWindow()
 const inputURL = document.querySelector('.url-input');
 const loadButton = document.querySelector('.load');
 const closeButton = document.querySelector('.close');
+const settingsButton = document.querySelector('.settings');
+const settingsOpenButton = document.querySelector('.settings-open');
+const settingsCloseButton = document.querySelector('.settings-close');
+const choosePathButton = document.querySelector('.base-path');
 const thumbnail = document.querySelector('.thumbnail');
 const videoTitle = document.querySelector('.video-title');
 const videoCreator = document.querySelector('.creator');
@@ -24,7 +28,6 @@ const downloadButton = document.querySelector('.download');
 const videoLink = document.querySelector('.video-link');
 
 let videoLoaded = false;
-let videoLength = 1;
 const VIDEO_MIN_LENGTH = 1;
 const MAX_VIDEO_TITLE_LENGTH = 30;
 
@@ -69,6 +72,18 @@ timelineEnd.addEventListener('input', () => {
 	updateTimeline();
 });
 
+settingsOpenButton.addEventListener('click', () => {
+	settingsButton.setAttribute('state', 'closed');
+});
+
+settingsCloseButton.addEventListener('click', () => {
+	settingsButton.setAttribute('state', 'opened');
+});
+
+choosePathButton.addEventListener('click', () => {
+	choosePath();
+});
+
 async function addVideo() {
 	const URL = inputURL.value;
 	const videoInformation = await getVideoInfo(URL);
@@ -77,7 +92,7 @@ async function addVideo() {
 	thumbnail.src =
 		videoInformation.player_response.videoDetails.thumbnail.thumbnails[0].url;
 	videoTitle.innerText = videoInformation.player_response.videoDetails.title;
-	videoCreator.innerText = `from ${videoInformation.player_response.videoDetails.author}`;
+	videoCreator.innerText = `from - ${videoInformation.player_response.videoDetails.author}`;
 
 	//timeline
 	const videoLength =
@@ -97,12 +112,7 @@ async function addVideo() {
 }
 
 async function downloadCurrent(url, fileName) {
-	const filePath = await choosePath(fileName);
-
-	if (!filePath) {
-		console.error('Error : No path chosen');
-		return;
-	}
+	const filePath = getStoragePath();
 
 	const downloadType = document.querySelector(
 		'input[name="download-type"]:checked'
@@ -115,7 +125,4 @@ async function downloadCurrent(url, fileName) {
 function updateTimeline() {
 	timesStart.innerText = `${formatSeconds(timelineStart.value)}s`;
 	timesEnd.innerText = `${formatSeconds(timelineEnd.value)}s`;
-	console.log((timelineStart.value + 1) / timelineEnd.max);
-	// timelineEnd.style.width = `${((timelineStart.value + 1) / timelineEnd.max) * 100}%`;
-	// timelineEnd.style.width = `${((timelineEnd.value + 1) / timelineStart.max) * 100}%`;
 }

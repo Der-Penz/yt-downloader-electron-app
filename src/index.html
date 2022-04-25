@@ -9,6 +9,11 @@
 		<link href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans&family=Montserrat:wght@800&family=Oswald:wght@600&display=swap" rel="stylesheet">
 
 		<link href='https://css.gg/close.css' rel='stylesheet'>
+		<link href='https://css.gg/folder.css' rel='stylesheet'>
+		<!-- <i class="gg-folder"></i> -->
+
+		<link href='https://css.gg/chevron-right.css' rel='stylesheet'>
+		<link href='https://css.gg/chevron-left.css' rel='stylesheet'>
 
 		<link rel="stylesheet" href="index.css" />
 
@@ -18,13 +23,18 @@
 	</head>
 	<body>
 		<div class="header">
-			<i class="gg-close close"></i>
+			<i class="icon gg-close close"></i>
+			<div class="settings" state="closed">
+				<i class="icon gg-chevron-right settings-close"></i>
+				<i class="icon gg-chevron-left settings-open"></i>
+				<i class="icon gg-folder base-path"></i>
+			</div>
 			<h1>Youtube Downloader</h1>
 			<div class="input-container">
 				<input
 					class="url-input"
 					type="text"
-					value="https://www.youtube.com/watch?v=jBmrduvKl5w"
+					value="https://www.youtube.com/watch?v=FTomDc1krk8&list=RDFTomDc1krk8&start_radio=1"
 					placeholder="Paste Video-URL here"
 					onClick="this.setSelectionRange(0, this.value.length)"
 				/>

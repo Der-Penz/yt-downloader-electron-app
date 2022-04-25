@@ -2,13 +2,13 @@
 	--bg-primary: #15161a;
 	--bg-secondary: #24252a;
 	--fg-primary: #f9f9f9;
-	--fg-contrast: #531CB3;
+	--fg-contrast: #531cb3;
 	--box-shadow: 0.5rem 0.5rem 1rem rgb(0 0 0 / 0.5);
 	--box-shadow-light: 0.2rem 0.2rem 1rem rgb(0 0 0 / 0.5);
 }
 
 ::-webkit-scrollbar {
-    display: none;
+	display: none;
 }
 
 * {
@@ -44,17 +44,49 @@ body {
 	box-shadow: var(--box-shadow);
 }
 
-.header .close {
+.header .icon {
 	position: absolute;
-	right: 1rem;
-	top: 1rem;
-	transform: scale(1.8);
+	transform: scale(1.5);
 	transition: transform 300ms cubic-bezier(0.52, 0.8, 0.35, 2.15);
 }
 
-.header .close:hover {
+.close {
+	right: 1rem;
+	top: 1rem;
+}
+
+.settings {
+	position: absolute;
+	left: 1rem;
+	top: 1rem;
+}
+
+.settings[state='closed'] .settings-open,
+.settings[state='opened'] .settings-close,
+.settings[state='closed'] .base-path {
+	display: none;
+}
+
+.settings[state='opened'] .settings-open,
+.settings[state='closed'] .settings-close,
+.settings[state='opened'] .base-path {
+	display: block;
+}
+
+.settings[state='opened'] .settings-open {
+	right: -3rem;
+}
+
+.base-path {
+	width: 1rem;
+	height: 0.9rem;
+	top: 0.4rem;
+	z-index: 1;
+}
+
+.header .icon:hover {
 	cursor: pointer;
-	transform: scale(1.9);
+	transform: scale(2);
 }
 
 .header h1 {
@@ -118,7 +150,7 @@ button:is(:focus, :hover) {
 	height: 100%;
 }
 
-.video-title{
+.video-title {
 	padding: 0.2rem;
 	max-width: 15rem;
 	font-weight: 400;
@@ -127,7 +159,7 @@ button:is(:focus, :hover) {
 	overflow: scroll;
 }
 
-.creator{
+.creator {
 	padding: 0.2rem;
 	max-width: 15rem;
 	font-weight: 200;
@@ -136,7 +168,7 @@ button:is(:focus, :hover) {
 	overflow: scroll;
 }
 
-.video-link{
+.video-link {
 	padding: 0.2rem;
 	max-width: 15rem;
 	font-weight: 100;
@@ -152,32 +184,32 @@ button:is(:focus, :hover) {
 	opacity: 0.7;
 }
 
-input[type="range"]{
+input[type='range'] {
 	width: 100%;
 	position: relative;
 	display: none;
-}	
-
-/* Track Styles */
-input[type=range]::-webkit-slider-runnable-track {
-  display: flex;
-  align-items: center;
-  border: none;
-  border-radius: 0.5rem;
-  background-color: var(--fg-contrast);
 }
 
-input[type=range]::-webkit-slider-thumb {
+/* Track Styles */
+input[type='range']::-webkit-slider-runnable-track {
+	display: flex;
+	align-items: center;
+	border: none;
+	border-radius: 0.5rem;
+	background-color: var(--fg-contrast);
+}
+
+input[type='range']::-webkit-slider-thumb {
 	border: 0.5rem solid var(--bg-primary);
 	height: 1em;
 	width: 1em;
 	border-radius: 1000px;
-  }
+}
 
 /* Focus Styles */
-input[type=range]:focus::-webkit-slider-runnable-track {
-  filter: brightness(150%);
-  border-radius: 0.5rem;
+input[type='range']:focus::-webkit-slider-runnable-track {
+	filter: brightness(150%);
+	border-radius: 0.5rem;
 }
 
 /* .end{
@@ -185,7 +217,8 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 	right: 0rem;
 } */
 
-.download-type, .times{
+.download-type,
+.times {
 	border: 0.2rem solid var(--bg-primary);
 	border-radius: 0.5rem;
 	padding: 0.5rem;
@@ -194,7 +227,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 }
 
 .download-type::before,
-.times::before{
+.times::before {
 	position: absolute;
 	content: attr(title);
 	top: -0.8rem;
@@ -203,7 +236,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 	background-color: var(--bg-secondary);
 }
 
-.timer-times{
+.timer-times {
 	position: relative;
 	left: 50%;
 	transform: translateX(-50%);
@@ -213,74 +246,73 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 	justify-content: center;
 }
 
-.timer{
+.timer {
 	font-size: 1.2rem;
 	letter-spacing: 200%;
 }
 
-.timer:first-of-type::after{
-	content: "-";
+.timer:first-of-type::after {
+	content: '-';
 	padding: 0rem 0.5rem;
 }
 
-label{
+label {
 	font-size: 1rem;
 	padding: 0.5rem;
 	text-decoration: none;
 	transition: text-decoration 300ms;
 }
 
-[type="radio"]:checked,
-[type="radio"]:not(:checked) {
-    position: absolute;
-    left: -9999px;
+[type='radio']:checked,
+[type='radio']:not(:checked) {
+	position: absolute;
+	left: -9999px;
 }
-[type="radio"]:checked + label,
-[type="radio"]:not(:checked) + label
-{
-    position: relative;
-    padding-left: 2rem;
-    cursor: pointer;
-    line-height: 1rem;
-    display: inline-block;
+[type='radio']:checked + label,
+[type='radio']:not(:checked) + label {
+	position: relative;
+	padding-left: 2rem;
+	cursor: pointer;
+	line-height: 1rem;
+	display: inline-block;
 }
-[type="radio"]:checked + label:before,
-[type="radio"]:not(:checked) + label:before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.3rem;
-    width: 1.1rem;
-    height: 1.1rem;
-    border-radius: 50%;
-    background: var(--fg-primary);
+[type='radio']:checked + label:before,
+[type='radio']:not(:checked) + label:before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0.3rem;
+	width: 1.1rem;
+	height: 1.1rem;
+	border-radius: 50%;
+	background: var(--fg-primary);
 }
-[type="radio"]:checked + label:after,
-[type="radio"]:not(:checked) + label:after {
-    content: '';
-    width: 0.8rem;
-    height: 0.8rem;
-    background: var(--fg-contrast);
-    position: absolute;
-    top: 0.47rem;
-    left: 0.13rem;
-    border-radius: 50%;
-    transition: all 0.2s cubic-bezier(0.82, 0.14, 0.11, 1.54);
+[type='radio']:checked + label:after,
+[type='radio']:not(:checked) + label:after {
+	content: '';
+	width: 0.8rem;
+	height: 0.8rem;
+	background: var(--fg-contrast);
+	position: absolute;
+	top: 0.47rem;
+	left: 0.13rem;
+	border-radius: 50%;
+	transition: all 0.2s cubic-bezier(0.82, 0.14, 0.11, 1.54);
 }
-[type="radio"]:not(:checked) + label:after {
-    opacity: 0;
-    transform: scale(0);
+[type='radio']:not(:checked) + label:after {
+	opacity: 0;
+	transform: scale(0);
 }
-[type="radio"]:checked + label:after {
-    opacity: 1;
-    transform: scale(1);
+[type='radio']:checked + label:after {
+	opacity: 1;
+	transform: scale(1);
 }
 
-input[type="radio"]:checked + label{
+input[type='radio']:checked + label {
 	text-decoration: underline;
 }
 
-.download{
+.download {
 	position: relative;
 	left: 50%;
 	transform: translate(-50%);
