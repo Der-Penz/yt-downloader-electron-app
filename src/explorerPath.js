@@ -3,7 +3,7 @@ const { dialog } = remote;
 
 async function choosePath() {
 	const { filePaths } = await dialog.showOpenDialog({
-		defaultPath: remote.app.getPath('downloads'),
+		defaultPath: getStoragePath(),
 		properties: ['openDirectory'],
 		title: 'Select folder to store files.',
 	});

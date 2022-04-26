@@ -8,7 +8,7 @@ import { choosePath, getStoragePath } from './explorerPath.js';
 import { formatSeconds } from './utilis.js';
 
 const remote = require('@electron/remote');
-const window = remote.getCurrentWindow()
+const window = remote.getCurrentWindow();
 
 const inputURL = document.querySelector('.url-input');
 const loadButton = document.querySelector('.load');
@@ -29,11 +29,16 @@ const videoLink = document.querySelector('.video-link');
 
 let videoLoaded = false;
 const VIDEO_MIN_LENGTH = 1;
-const MAX_VIDEO_TITLE_LENGTH = 30;
+const MAX_VIDEO_TITLE_LENGTH = 50;
+
+//#region Event Listeners
 
 loadButton.addEventListener('click', () => {
-	console.log('adding video');
-	addVideo(inputURL.value);
+	const URL = inputURL.value;
+
+	if (!isValidURL(URL)) return;
+	
+	addVideo(URL);
 });
 
 downloadButton.addEventListener('click', () => {
@@ -44,8 +49,12 @@ downloadButton.addEventListener('click', () => {
 
 	downloadCurrent(
 		inputURL.value,
-		videoTitle.innerText.substring(0, MAX_VIDEO_TITLE_LENGTH)
+		videoTitle.innerText
+			.substring(0, MAX_VIDEO_TITLE_LENGTH)
+			.replace(/([^a-z0-9]+)/gi, '-')
 	);
+
+	inputURL.value = '';
 });
 
 closeButton.addEventListener('click', () => {
@@ -84,10 +93,12 @@ choosePathButton.addEventListener('click', () => {
 	choosePath();
 });
 
+//#endregion
+
 async function addVideo() {
 	const URL = inputURL.value;
 	const videoInformation = await getVideoInfo(URL);
-	
+
 	//setting the html elements
 	thumbnail.src =
 		videoInformation.player_response.videoDetails.thumbnail.thumbnails[0].url;
@@ -118,8 +129,8 @@ async function downloadCurrent(url, fileName) {
 		'input[name="download-type"]:checked'
 	).value;
 
-	if (downloadType === 'mp3') downloadAudio(url, filePath);
-	else if (downloadType === 'mp4') downloadVideo(url, filePath);
+	if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
+	else if (downloadType === 'mp4') downloadVideo(url, filePath, fileName);
 }
 
 function updateTimeline() {
