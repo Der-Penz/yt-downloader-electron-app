@@ -4,6 +4,7 @@ import {
 	getVideoInfo,
 	isValidURL,
 } from './youtubeLibary.js';
+import { showError, showInfo, showSuccess } from './notification.js';
 import { choosePath, getStoragePath } from './explorerPath.js';
 import { formatSeconds } from './utilis.js';
 
@@ -35,15 +36,18 @@ const MAX_VIDEO_TITLE_LENGTH = 50;
 
 loadButton.addEventListener('click', () => {
 	const URL = inputURL.value;
-
-	if (!isValidURL(URL)) return;
+	
+	if (!isValidURL(URL)){
+		showError("Please enter a valid URL");	
+		return;
+	} 
 	
 	addVideo(URL);
 });
 
 downloadButton.addEventListener('click', () => {
 	if (!videoLoaded) {
-		console.error('Error : No video added');
+		showError('Please load a video first');
 		return;
 	}
 
@@ -89,8 +93,9 @@ settingsCloseButton.addEventListener('click', () => {
 	settingsButton.setAttribute('state', 'opened');
 });
 
-choosePathButton.addEventListener('click', () => {
-	choosePath();
+choosePathButton.addEventListener('click', async () => {
+	await choosePath();
+	showInfo('Path changed');
 });
 
 //#endregion
@@ -120,6 +125,7 @@ async function addVideo() {
 	updateTimeline();
 
 	videoLoaded = true;
+	showInfo('Video loaded');
 }
 
 async function downloadCurrent(url, fileName) {

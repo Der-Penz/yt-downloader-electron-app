@@ -1,4 +1,5 @@
 import { updateProgress } from './utilis.js';
+import { showSuccess } from './notification.js';
 
 const ytdl = require('ytdl-core');
 const fs = require('fs');
@@ -44,7 +45,7 @@ async function downloadVideo(url, filePath, title) {
 			updateProgress(0, undefined,  false);
 		}, 1000);
 
-		console.log('Download complete!', `Saved to ${filePath}`);
+		showSuccess(`Download complete! took ${(Date.now() - startTime) / 1000}s`, 4000);
 		console.timeEnd('Download');
 	});
 }
@@ -86,7 +87,7 @@ async function downloadAudio(url, filePath, title) {
 				updateProgress(0, undefined, false);
 			}, 1000);
 
-			console.log('Download complete!', `Saved to ${filePath}`);
+			showSuccess(`Download complete! took ${(Date.now() - startTime) / 1000}s`, 4000);
 			console.timeEnd('Download');
 		});
 }
