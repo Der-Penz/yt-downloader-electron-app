@@ -4,7 +4,7 @@ import {
 	getVideoInfo,
 	isValidURL,
 } from './youtubeLibary.js';
-import { showError, showInfo, showSuccess } from './notification.js';
+import { showError, showInfo } from './notification.js';
 import { choosePath, getStoragePath } from './explorerPath.js';
 import { formatSeconds } from './utilis.js';
 
@@ -29,6 +29,7 @@ const downloadButton = document.querySelector('.download');
 const videoLink = document.querySelector('.video-link');
 
 let videoLoaded = false;
+let downloading = false;
 const VIDEO_MIN_LENGTH = 1;
 const MAX_VIDEO_TITLE_LENGTH = 50;
 
@@ -36,12 +37,12 @@ const MAX_VIDEO_TITLE_LENGTH = 50;
 
 loadButton.addEventListener('click', () => {
 	const URL = inputURL.value;
-	
-	if (!isValidURL(URL)){
-		showError("Please enter a valid URL");	
+
+	if (!isValidURL(URL)) {
+		showError('Please enter a valid URL');
 		return;
-	} 
-	
+	}
+
 	addVideo(URL);
 });
 
@@ -57,8 +58,6 @@ downloadButton.addEventListener('click', () => {
 			.substring(0, MAX_VIDEO_TITLE_LENGTH)
 			.replace(/([^a-z0-9]+)/gi, '-')
 	);
-
-	inputURL.value = '';
 });
 
 closeButton.addEventListener('click', () => {
@@ -128,12 +127,19 @@ async function addVideo() {
 	showInfo('Video loaded');
 }
 
-async function downloadCurrent(url, fileName) {
+function downloadCurrent(url, fileName) {
+	if (downloading) {
+		showError('A Download is already in progress');
+		return;
+	}
+
 	const filePath = getStoragePath();
 
 	const downloadType = document.querySelector(
 		'input[name="download-type"]:checked'
 	).value;
+
+	downloading = true;
 
 	if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
 	else if (downloadType === 'mp4') downloadVideo(url, filePath, fileName);
@@ -143,3 +149,10 @@ function updateTimeline() {
 	timesStart.innerText = `${formatSeconds(timelineStart.value)}s`;
 	timesEnd.innerText = `${formatSeconds(timelineEnd.value)}s`;
 }
+
+function resetDownload() {
+	showInfo('Ready for a new download', 1500);
+	downloading = false;
+}
+
+export { resetDownload };

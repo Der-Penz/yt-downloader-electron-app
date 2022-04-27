@@ -351,19 +351,23 @@ input[type='radio']:checked + label {
 	position: absolute;
 	inset: 0rem;
 	pointer-events: none;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	justify-content: flex-start;
 }
 
 .notification{
 	max-width: 20rem;
 	font-size: 1.2rem;
 	position: relative;
-	left: 0;
-	top: 0;
 	border-radius: 0.5rem;
+	right: 0;
 	margin: 0.5rem;
 	padding: 0.5rem;
 	transition: opacity 200ms ease-out;
 	opacity: 0;
+	float: right;
 }
 
 .notification.show{

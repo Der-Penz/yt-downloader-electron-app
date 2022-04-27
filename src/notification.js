@@ -4,7 +4,6 @@ const DEFAULT_DISPLAY_TIME = 1000;
 const MAX_ITEMS = 3;
 
 function showError(message, displayTime) {
-    console.log(displayTime);
 	createNotification(message, notificationType.error, displayTime);
 }
 
@@ -17,7 +16,6 @@ function showInfo(message, displayTime) {
 }
 
 function createNotification(message, type, displayTime = DEFAULT_DISPLAY_TIME) {
-    console.log(displayTime);
 	const notification = document.createElement('div');
 	const icon = document.createElement('i');
     
