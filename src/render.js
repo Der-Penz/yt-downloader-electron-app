@@ -30,20 +30,26 @@ const videoLink = document.querySelector('.video-link');
 
 let videoLoaded = false;
 let downloading = false;
+let videoURL = '';
 const VIDEO_MIN_LENGTH = 1;
 const MAX_VIDEO_TITLE_LENGTH = 50;
 
 //#region Event Listeners
 
 loadButton.addEventListener('click', () => {
-	const URL = inputURL.value;
+	const value = inputURL.value;
 
-	if (!isValidURL(URL)) {
-		showError('Please enter a valid URL');
-		return;
+	if (!videoLoaded) {
+		videoURL = value;
+		if (!isValidURL(videoURL)) {
+			showError('Please enter a valid URL');
+			return;
+		}
+
+		inputURL.value = '';
+		inputURL.placeholder = 'Enter a alternative file name';
+		addVideo(videoURL);
 	}
-
-	addVideo(URL);
 });
 
 downloadButton.addEventListener('click', () => {
@@ -51,13 +57,11 @@ downloadButton.addEventListener('click', () => {
 		showError('Please load a video first');
 		return;
 	}
+	const title =
+		inputURL.value ||
+		videoTitle.innerText.substring(0, MAX_VIDEO_TITLE_LENGTH);
 
-	downloadCurrent(
-		inputURL.value,
-		videoTitle.innerText
-			.substring(0, MAX_VIDEO_TITLE_LENGTH)
-			.replace(/([^a-z0-9]+)/gi, '-')
-	);
+	downloadCurrent(videoURL, title.replace(/([^a-z0-9]+)/gi, '-'));
 });
 
 closeButton.addEventListener('click', () => {
@@ -99,8 +103,7 @@ choosePathButton.addEventListener('click', async () => {
 
 //#endregion
 
-async function addVideo() {
-	const URL = inputURL.value;
+async function addVideo(URL) {
 	const videoInformation = await getVideoInfo(URL);
 
 	//setting the html elements
@@ -153,6 +156,9 @@ function updateTimeline() {
 function resetDownload() {
 	showInfo('Ready for a new download', 1500);
 	downloading = false;
+	inputURL.value = videoURL;
+	inputURL.placeholder = 'Paste Video-URL here';
+	videoLoaded = false;
 }
 
 export { resetDownload };

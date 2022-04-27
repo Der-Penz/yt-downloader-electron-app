@@ -15,107 +15,6 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const UPDATE_PERIOD = 100;
 let updated = false;
 
-// function downloadVideo(url, filePath, title) {
-// 	console.log('Downloading video...');
-// 	console.time('Download');
-
-// 	const videoObject = ytdl(url, { quality: 'highestvideo' });
-
-// 	updateProgress(0, undefined, true);
-
-// 	const startTime = Date.now();
-
-// 	videoObject.pipe(fs.createWriteStream(`${filePath}/${title}.mp4`));
-
-// 	videoObject.on('progress', (chunkLength, downloaded, total) => {
-// 		const progress = downloaded / total;
-
-// 		if (!updated) {
-// 			updateProgress(
-// 				progress * 100,
-// 				[downloaded, total],
-// 				true,
-// 				Date.now() - startTime
-// 			);
-// 			updated = true;
-// 			setTimeout(() => {
-// 				updated = false;
-// 			}, 500);
-// 		}
-
-// 		console.log('Progress: ', progress);
-// 	});
-
-// 	videoObject.on('finish', () => {
-// 		updateProgress(100, undefined, true, Date.now() - startTime);
-// 		setTimeout(() => {
-// 			updateProgress(0, undefined, false);
-// 		}, 1000);
-
-// 		showSuccess(
-// 			`Download complete! took ${(Date.now() - startTime) / 1000}s`,
-// 			4000
-// 		);
-// 		console.timeEnd('Download');
-// 	});
-// }
-
-function downloadAudio(url, filePath, title) {
-	const videoObject = ytdl(url, {
-		quality: 'highestaudio',
-		filter: 'audio',
-	});
-
-	updateProgress(0, undefined, true);
-
-	console.log('Downloading audio...');
-	videoObject.on('progress', (chunkLength, downloaded, total) => {
-		const progress = downloaded / total;
-
-		if (!updated) {
-			updateProgress(
-				progress * 100,
-				[downloaded, total],
-				true,
-				Date.now() - startTime
-			);
-			updated = true;
-			setTimeout(() => {
-				updated = false;
-			}, UPDATE_PERIOD);
-		}
-
-		console.log('Progress: ', progress);
-	});
-
-	const startTime = Date.now();
-
-	ffmpeg(videoObject)
-		.audioBitrate(128)
-		.save(`${filePath}/${title}.mp3`)
-		.on('end', () => {
-			updateProgress(100, undefined, true, Date.now() - startTime);
-			setTimeout(() => {
-				updateProgress(0, undefined, false);
-			}, 1000);
-
-			showSuccess(
-				`Download complete! took ${(Date.now() - startTime) / 1000}s`,
-				4000
-			);
-			console.timeEnd('Download');
-			resetDownload();
-		});
-}
-
-async function getVideoInfo(url) {
-	return await ytdl.getInfo(url);
-}
-
-function isValidURL(url) {
-	return ytdl.validateURL(url);
-}
-
 async function downloadVideo(url, filePath, title) {
 	const tracker = {
 		audio: { downloaded: 0, total: Infinity },
@@ -234,6 +133,62 @@ async function downloadVideo(url, filePath, title) {
 	});
 	audioObject.pipe(ffmpegProcess.stdio[4]);
 	videoObject.pipe(ffmpegProcess.stdio[5]);
+}
+
+function downloadAudio(url, filePath, title) {
+	const videoObject = ytdl(url, {
+		quality: 'highestaudio',
+		filter: 'audio',
+	});
+
+	updateProgress(0, undefined, true);
+
+	console.log('Downloading audio...');
+	videoObject.on('progress', (chunkLength, downloaded, total) => {
+		const progress = downloaded / total;
+
+		if (!updated) {
+			updateProgress(
+				progress * 100,
+				[downloaded, total],
+				true,
+				Date.now() - startTime
+			);
+			updated = true;
+			setTimeout(() => {
+				updated = false;
+			}, UPDATE_PERIOD);
+		}
+
+		console.log('Progress: ', progress);
+	});
+
+	const startTime = Date.now();
+
+	ffmpeg(videoObject)
+		.audioBitrate(128)
+		.save(`${filePath}/${title}.mp3`)
+		.on('end', () => {
+			updateProgress(100, undefined, true, Date.now() - startTime);
+			setTimeout(() => {
+				updateProgress(0, undefined, false);
+			}, 1000);
+
+			showSuccess(
+				`Download complete! took ${(Date.now() - startTime) / 1000}s`,
+				4000
+			);
+			console.timeEnd('Download');
+			resetDownload();
+		});
+}
+
+async function getVideoInfo(url) {
+	return await ytdl.getInfo(url);
+}
+
+function isValidURL(url) {
+	return ytdl.validateURL(url);
 }
 
 export { downloadVideo, downloadAudio, getVideoInfo, isValidURL };
