@@ -57,11 +57,12 @@ downloadButton.addEventListener('click', () => {
 		showError('Please load a video first');
 		return;
 	}
+	console.log(inputURL.value);
 	const title =
 		inputURL.value ||
 		videoTitle.innerText.substring(0, MAX_VIDEO_TITLE_LENGTH);
 
-	downloadCurrent(videoURL, title.replace(/([^a-z0-9]+)/gi, '-'));
+	downloadCurrent(videoURL, title.replace(/([^a-z0-9 - (%!&=)]+)/gi, '-'));
 });
 
 closeButton.addEventListener('click', () => {
