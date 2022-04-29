@@ -115,7 +115,8 @@ button {
 }
 
 .input-container > *:is(:focus, :hover),
-button:is(:focus, :hover) {
+button:is(:focus, :hover),
+.selection-quality:is(:focus, :hover) {
 	cursor: pointer;
 	outline: solid 0.1rem var(--fg-primary);
 	outline-offset: initial;
@@ -143,6 +144,7 @@ button:is(:focus, :hover) {
 	overflow: hidden;
 	border-radius: 0.5rem;
 	box-shadow: var(--box-shadow);
+	user-select: none;
 }
 
 .thumbnail-container .thumbnail {
@@ -258,6 +260,10 @@ input[type='range']:focus::-webkit-slider-runnable-track {
 	padding: 0rem 0.5rem;
 }
 
+.download-type{
+	min-width: 13rem;
+}
+
 label {
 	font-size: 1rem;
 	padding: 0.5rem;
@@ -312,6 +318,32 @@ label {
 
 input[type='radio']:checked + label {
 	text-decoration: underline;
+}
+
+.selection-quality{
+	background-color: var(--bg-primary);
+	border: none;
+	border-radius: 0.5rem;
+	padding: 0.2rem;
+	font-size: 1rem;
+	outline-offset: 0.15rem;
+	user-select: none;
+	box-shadow: var(--box-shadow);
+	font-family: 'Montserrat', sans-serif;
+	opacity: 0;
+	transition: outline-offset 300ms, opacity 200ms;
+	pointer-events: none;
+}
+
+.selection-quality *{
+	border: 1rem solid red;
+	background-color: inherit;
+	
+}
+
+input[type='radio']:last-of-type:checked ~ .selection-quality{
+	opacity: 1;
+	pointer-events: all;
 }
 
 .download {

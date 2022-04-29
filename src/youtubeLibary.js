@@ -15,7 +15,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const UPDATE_PERIOD = 100;
 let updated = false;
 
-async function downloadVideo(url, filePath, title) {
+async function downloadVideo(url, filePath, title, format) {
 	const tracker = {
 		audio: { downloaded: 0, total: Infinity },
 		video: { downloaded: 0, total: Infinity },
@@ -29,7 +29,7 @@ async function downloadVideo(url, filePath, title) {
 			tracker.audio = { downloaded, total };
 		}
 	);
-	const videoObject = ytdl(url, { quality: 'highestvideo' }).on(
+	const videoObject = ytdl(url, { quality: format }).on(
 		'progress',
 		(chunkLength, downloaded, total) => {
 			tracker.video = { downloaded, total };

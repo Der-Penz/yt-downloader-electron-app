@@ -25,6 +25,7 @@ const timesStart = document.querySelector('.times .start');
 const timesEnd = document.querySelector('.times .end');
 const timelineStart = document.querySelector('.timeline .start');
 const timelineEnd = document.querySelector('.timeline .end');
+const formatSelection = document.querySelector('.selection-quality');
 const downloadButton = document.querySelector('.download');
 const videoLink = document.querySelector('.video-link');
 
@@ -39,17 +40,17 @@ const MAX_VIDEO_TITLE_LENGTH = 50;
 loadButton.addEventListener('click', () => {
 	const value = inputURL.value;
 
-	if (!videoLoaded) {
-		videoURL = value;
-		if (!isValidURL(videoURL)) {
-			showError('Please enter a valid URL');
-			return;
-		}
+	if (!value.includes('watch?v=')) return;
 
-		inputURL.value = '';
-		inputURL.placeholder = 'Enter a alternative file name';
-		addVideo(videoURL);
+	videoURL = value;
+	if (!isValidURL(videoURL)) {
+		showError('Please enter a valid URL');
+		return;
 	}
+
+	inputURL.value = '';
+	inputURL.placeholder = 'Enter a alternative file name';
+	addVideo(videoURL);
 });
 
 downloadButton.addEventListener('click', () => {
@@ -57,7 +58,7 @@ downloadButton.addEventListener('click', () => {
 		showError('Please load a video first');
 		return;
 	}
-	console.log(inputURL.value);
+
 	const title =
 		inputURL.value ||
 		videoTitle.innerText.substring(0, MAX_VIDEO_TITLE_LENGTH);
@@ -107,6 +108,20 @@ choosePathButton.addEventListener('click', async () => {
 async function addVideo(URL) {
 	const videoInformation = await getVideoInfo(URL);
 
+	const videoFormats = videoInformation.formats
+		.filter((format) => format.hasVideo == true && format.quality != 'tiny')
+		.sort((a, b) => {
+			var qualA = parseInt(a.qualityLabel);
+			var qualB = parseInt(b.qualityLabel);
+			if (qualA < qualB) {
+				return 1;
+			}
+			if (qualA > qualB) {
+				return -1;
+			}
+			return 0;
+		});
+
 	//setting the html elements
 	thumbnail.src =
 		videoInformation.player_response.videoDetails.thumbnail.thumbnails[0].url;
@@ -124,6 +139,20 @@ async function addVideo(URL) {
 	timelineEnd.value = timelineEnd.max;
 
 	videoLink.href = URL;
+
+	//formats
+	formatSelection.innerHTML = '';
+	const highestOption = document.createElement('option');
+	highestOption.value = 'highestvideo';
+	highestOption.innerText = 'Highest Quality';
+	formatSelection.appendChild(highestOption);
+
+	videoFormats.forEach((format) => {
+		const option = document.createElement('option');
+		option.value = format.itag;
+		option.innerText = format.qualityLabel;
+		formatSelection.appendChild(option);
+	});
 
 	updateTimeline();
 
@@ -146,7 +175,10 @@ function downloadCurrent(url, fileName) {
 	downloading = true;
 
 	if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
-	else if (downloadType === 'mp4') downloadVideo(url, filePath, fileName);
+	else if (downloadType === 'mp4') {
+		let format = document.querySelector('.selection-quality').value;
+		downloadVideo(url, filePath, fileName, format);
+	}
 }
 
 function updateTimeline() {
