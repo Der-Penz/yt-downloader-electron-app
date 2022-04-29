@@ -45,9 +45,12 @@ async function downloadVideo(url, filePath, title, format) {
 	const showProgress = () => {
 		const alreadyDownloaded =
 			tracker.audio.downloaded + tracker.video.downloaded;
-			console.log(alreadyDownloaded, tracker.audio.downloaded, tracker.video.downloaded);
-		const totalDownload =
-			tracker.audio.total + tracker.video.total;
+		console.log(
+			alreadyDownloaded,
+			tracker.audio.downloaded,
+			tracker.video.downloaded
+		);
+		const totalDownload = tracker.audio.total + tracker.video.total;
 
 		updateProgress(
 			(alreadyDownloaded / totalDownload) * 100,

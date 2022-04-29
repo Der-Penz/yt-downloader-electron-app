@@ -5,7 +5,7 @@ import {
 	isValidURL,
 } from './youtubeLibary.js';
 import { showError, showInfo } from './notification.js';
-import { choosePath, getStoragePath } from './explorerPath.js';
+import { choosePath, getStoragePath, doesFileExist } from './explorerPath.js';
 import { formatSeconds } from './utilis.js';
 
 const remote = require('@electron/remote');
@@ -171,6 +171,11 @@ function downloadCurrent(url, fileName) {
 	const downloadType = document.querySelector(
 		'input[name="download-type"]:checked'
 	).value;
+
+	if(doesFileExist(filePath, fileName, downloadType)) {
+		showError('File already exists, choose a different name');
+		return;
+	}
 
 	downloading = true;
 
