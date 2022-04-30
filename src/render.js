@@ -1,6 +1,7 @@
 import {
 	downloadVideo,
 	downloadAudio,
+	downloadPartly,
 	getVideoInfo,
 	isValidURL,
 } from './youtubeLibary.js';
@@ -178,6 +179,9 @@ function downloadCurrent(url, fileName) {
 	}
 
 	downloading = true;
+
+	downloadPartly(url, filePath, fileName);
+	return;
 
 	if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
 	else if (downloadType === 'mp4') {

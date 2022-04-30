@@ -36,7 +36,6 @@ async function downloadVideo(url, filePath, title, format) {
 		}
 	);
 
-	console.time('Download');
 	const startTime = Date.now();
 
 	updateProgress(0, undefined, true, 0);
@@ -45,11 +44,6 @@ async function downloadVideo(url, filePath, title, format) {
 	const showProgress = () => {
 		const alreadyDownloaded =
 			tracker.audio.downloaded + tracker.video.downloaded;
-		console.log(
-			alreadyDownloaded,
-			tracker.audio.downloaded,
-			tracker.video.downloaded
-		);
 		const totalDownload = tracker.audio.total + tracker.video.total;
 
 		updateProgress(
@@ -112,7 +106,6 @@ async function downloadVideo(url, filePath, title, format) {
 			`Download complete! took ${(Date.now() - startTime) / 1000}s`,
 			4000
 		);
-		console.timeEnd('Download');
 		clearInterval(progressInterval);
 		resetDownload();
 	});
@@ -146,7 +139,6 @@ function downloadAudio(url, filePath, title) {
 
 	updateProgress(0, undefined, true);
 
-	console.log('Downloading audio...');
 	videoObject.on('progress', (chunkLength, downloaded, total) => {
 		const progress = downloaded / total;
 
@@ -163,7 +155,6 @@ function downloadAudio(url, filePath, title) {
 			}, UPDATE_PERIOD);
 		}
 
-		console.log('Progress: ', progress);
 	});
 
 	const startTime = Date.now();
@@ -181,8 +172,85 @@ function downloadAudio(url, filePath, title) {
 				`Download complete! took ${(Date.now() - startTime) / 1000}s`,
 				4000
 			);
-			console.timeEnd('Download');
 			resetDownload();
+		});
+}
+
+function downloadPartly(url, filePath, title, timeStart = '00:01:00', timeDuration = '00:00:10') {
+	const videoObject = ytdl(url);
+	
+	const startTime = Date.now();
+
+	updateProgress(0, undefined, true);
+
+	videoObject.on('progress', (chunkLength, downloaded, total) => {
+		const progress = (downloaded / total) * 100;
+
+		updateProgress(
+			progress,
+			[downloaded, total],
+			true,
+			Date.now() - startTime
+		);
+	});
+
+	videoObject
+		.pipe(fs.createWriteStream(`${filePath}/tmp.mp4`))
+		.on('finish', () => {
+			const ffmpegProcess = cp.spawn(
+				ffmpegStatic,
+				[
+					'-y',
+					'-v',
+					'error',
+					'-progress',
+					'pipe:3',
+					'-i',
+					`${filePath}/tmp.mp4`,
+					'-vcodec',
+					'copy',
+					'-acodec',
+					'copy',
+					'-ss',
+					timeStart,
+					'-t',
+					timeDuration,
+					'-f',
+					'matroska',
+					'pipe:4',
+				],
+				{
+					windowsHide: true,
+					stdio: ['inherit', 'inherit', 'inherit', 'pipe', 'pipe'],
+				}
+			);
+
+			ffmpegProcess.stdio[3].on('data', (chunk) => {
+				const args = chunk
+					.toString()
+					.trim()
+					.split('\n')
+					.reduce((acc, line) => {
+						let parts = line.split('=');
+						acc[parts[0]] = parts[1];
+						return acc;
+					}, {});
+			});
+
+			ffmpegProcess.on('close', () => {
+				updateProgress(100, [0, 0], true, Date.now() - startTime);
+				showSuccess(
+					`Download complete! took ${
+						(Date.now() - startTime) / 1000
+					}s`,
+					4000
+				);
+				resetDownload();
+			});
+
+			ffmpegProcess.stdio[4].pipe(
+				fs.createWriteStream(`${filePath}/${title}.mkv`)
+			);
 		});
 }
 
@@ -194,4 +262,4 @@ function isValidURL(url) {
 	return ytdl.validateURL(url);
 }
 
-export { downloadVideo, downloadAudio, getVideoInfo, isValidURL };
+export { downloadVideo, downloadAudio, downloadPartly, getVideoInfo, isValidURL };
