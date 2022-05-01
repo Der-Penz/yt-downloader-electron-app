@@ -99,9 +99,8 @@ settingsCloseButton.addEventListener('click', () => {
 	settingsButton.setAttribute('state', 'opened');
 });
 
-choosePathButton.addEventListener('click', async () => {
-	await choosePath();
-	showInfo('Path changed');
+choosePathButton.addEventListener('click', () => {
+	choosePath().then((path) => showInfo('Path changed to'));
 });
 
 //#endregion
@@ -173,21 +172,31 @@ function downloadCurrent(url, fileName) {
 		'input[name="download-type"]:checked'
 	).value;
 
-	if(doesFileExist(filePath, fileName, downloadType)) {
+	if (doesFileExist(filePath, fileName, downloadType)) {
 		showError('File already exists, choose a different name');
 		return;
 	}
-
+	
 	downloading = true;
 
-	downloadPartly(url, filePath, fileName);
-	return;
-
-	if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
-	else if (downloadType === 'mp4') {
-		let format = document.querySelector('.selection-quality').value;
-		downloadVideo(url, filePath, fileName, format);
+	//if no range is selected, download the whole video
+	if(timelineStart.min == timelineStart.value && timelineEnd.max == timelineEnd.value){
+		if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
+		else if (downloadType === 'mp4') {
+			let format = document.querySelector('.selection-quality').value;
+			downloadVideo(url, filePath, fileName, format);
+		}
 	}
+	//if a range is selected, download the selected range
+	else{
+		const valueStart = formatSeconds(timelineStart.value);
+		const valueEnd = formatSeconds(timelineEnd.value);
+		downloadPartly(url, filePath, fileName, downloadType, valueStart, valueEnd);
+	}
+		
+
+
+	
 }
 
 function updateTimeline() {

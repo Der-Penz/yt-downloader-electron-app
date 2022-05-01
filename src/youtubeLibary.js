@@ -176,7 +176,7 @@ function downloadAudio(url, filePath, title) {
 		});
 }
 
-function downloadPartly(url, filePath, title, timeStart = '00:01:00', timeDuration = '00:00:10') {
+function downloadPartly(url, filePath, title, downloadType, timeStart = '0:01:00', timeDuration = '0:00:10') {
 	const videoObject = ytdl(url);
 	
 	const startTime = Date.now();
@@ -225,19 +225,10 @@ function downloadPartly(url, filePath, title, timeStart = '00:01:00', timeDurati
 				}
 			);
 
-			ffmpegProcess.stdio[3].on('data', (chunk) => {
-				const args = chunk
-					.toString()
-					.trim()
-					.split('\n')
-					.reduce((acc, line) => {
-						let parts = line.split('=');
-						acc[parts[0]] = parts[1];
-						return acc;
-					}, {});
-			});
-
 			ffmpegProcess.on('close', () => {
+				fs.rmSync(`${filePath}/tmp.mp4`, {
+					force: true,
+				});
 				updateProgress(100, [0, 0], true, Date.now() - startTime);
 				showSuccess(
 					`Download complete! took ${
@@ -249,7 +240,7 @@ function downloadPartly(url, filePath, title, timeStart = '00:01:00', timeDurati
 			});
 
 			ffmpegProcess.stdio[4].pipe(
-				fs.createWriteStream(`${filePath}/${title}.mkv`)
+				fs.createWriteStream(`${filePath}/${title}.mp4`)
 			);
 		});
 }
