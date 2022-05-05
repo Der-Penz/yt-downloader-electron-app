@@ -4,6 +4,7 @@ import { resetDownload } from './render.js';
 
 const cp = require('child_process');
 const ytdl = require('ytdl-core');
+const ytpl = require('ytpl');
 const fs = require('fs');
 const readline = require('readline');
 const ffmpegStatic = require('ffmpeg-static');
@@ -154,7 +155,6 @@ function downloadAudio(url, filePath, title) {
 				updated = false;
 			}, UPDATE_PERIOD);
 		}
-
 	});
 
 	const startTime = Date.now();
@@ -176,9 +176,16 @@ function downloadAudio(url, filePath, title) {
 		});
 }
 
-function downloadPartly(url, filePath, title, downloadType, timeStart = '0:01:00', timeDuration = '0:00:10') {
+function downloadPartly(
+	url,
+	filePath,
+	title,
+	downloadType,
+	timeStart = '0:01:00',
+	timeDuration = '0:00:10'
+) {
 	const videoObject = ytdl(url);
-	
+
 	const startTime = Date.now();
 
 	updateProgress(0, undefined, true);
@@ -249,8 +256,24 @@ async function getVideoInfo(url) {
 	return await ytdl.getInfo(url);
 }
 
-function isValidURL(url) {
+async function getPlaylistInfo(url) {
+	return await ytpl(url);
+}
+
+function isValidPlaylistURL(id) {
+	return ytpl.validateID(id);
+}
+
+function isValidVideoURL(url) {
 	return ytdl.validateURL(url);
 }
 
-export { downloadVideo, downloadAudio, downloadPartly, getVideoInfo, isValidURL };
+export {
+	downloadVideo,
+	downloadAudio,
+	downloadPartly,
+	getVideoInfo,
+	isValidVideoURL,
+	isValidPlaylistURL,
+	getPlaylistInfo,
+};
