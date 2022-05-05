@@ -1,8 +1,11 @@
 import {
 	downloadVideo,
 	downloadAudio,
+	downloadPartly,
 	getVideoInfo,
-	isValidURL,
+	isValidVideoURL,
+	isValidPlaylistURL,
+	getPlaylistInfo,
 } from './youtubeLibary.js';
 import { showError, showInfo } from './notification.js';
 import { choosePath, getStoragePath, doesFileExist } from './explorerPath.js';
@@ -36,21 +39,30 @@ const VIDEO_MIN_LENGTH = 1;
 const MAX_VIDEO_TITLE_LENGTH = 50;
 
 //#region Event Listeners
-
 loadButton.addEventListener('click', () => {
 	const value = inputURL.value;
 
-	if (!value.includes('watch?v=')) return;
+	if (value.includes('watch?v=')){
+		videoURL = value;
+		if (!isValidVideoURL(videoURL)) {
+			showError('Please enter a valid Video URL');
+			return;
+		}
 
-	videoURL = value;
-	if (!isValidURL(videoURL)) {
-		showError('Please enter a valid URL');
-		return;
+		inputURL.value = '';
+		inputURL.placeholder = 'Enter a alternative file name';
+		addVideo(videoURL);
 	}
-
-	inputURL.value = '';
-	inputURL.placeholder = 'Enter a alternative file name';
-	addVideo(videoURL);
+	if (value.includes('playlist?list=')){
+		const playlistURL = value;
+		if (!isValidPlaylistURL(playlistURL)) {
+			showError('Please enter a valid Playlist URL');
+			return;
+		}
+		inputURL.value = '';
+		inputURL.placeholder = 'Enter a alternative file name';
+		addPlaylist(playlistURL);
+	}
 });
 
 downloadButton.addEventListener('click', () => {
@@ -98,9 +110,8 @@ settingsCloseButton.addEventListener('click', () => {
 	settingsButton.setAttribute('state', 'opened');
 });
 
-choosePathButton.addEventListener('click', async () => {
-	await choosePath();
-	showInfo('Path changed');
+choosePathButton.addEventListener('click', () => {
+	choosePath().then((path) => showInfo('Path changed to'));
 });
 
 //#endregion
@@ -160,6 +171,17 @@ async function addVideo(URL) {
 	showInfo('Video loaded');
 }
 
+async function addPlaylist(URL){
+	console.log("Loading Playlist ", URL);
+	const playlistInformation = await getPlaylistInfo(URL);
+	console.log(playlistInformation);
+
+	thumbnail.src = playlistInformation.bestThumbnail.url;
+	videoTitle.innerText = playlistInformation.title;
+	videoCreator.innerText = playlistInformation.author.name;
+	videoLink.href = playlistInformation.url;
+}
+
 function downloadCurrent(url, fileName) {
 	if (downloading) {
 		showError('A Download is already in progress');
@@ -172,18 +194,31 @@ function downloadCurrent(url, fileName) {
 		'input[name="download-type"]:checked'
 	).value;
 
-	if(doesFileExist(filePath, fileName, downloadType)) {
+	if (doesFileExist(filePath, fileName, downloadType)) {
 		showError('File already exists, choose a different name');
 		return;
 	}
-
+	
 	downloading = true;
 
-	if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
-	else if (downloadType === 'mp4') {
-		let format = document.querySelector('.selection-quality').value;
-		downloadVideo(url, filePath, fileName, format);
+	//if no range is selected, download the whole video
+	if(timelineStart.min == timelineStart.value && timelineEnd.max == timelineEnd.value){
+		if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
+		else if (downloadType === 'mp4') {
+			let format = document.querySelector('.selection-quality').value;
+			downloadVideo(url, filePath, fileName, format);
+		}
 	}
+	//if a range is selected, download the selected range
+	else{
+		const valueStart = formatSeconds(timelineStart.value);
+		const valueEnd = formatSeconds(timelineEnd.value);
+		downloadPartly(url, filePath, fileName, downloadType, valueStart, valueEnd);
+	}
+		
+
+
+	
 }
 
 function updateTimeline() {

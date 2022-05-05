@@ -1,5 +1,4 @@
-const remote = require('@electron/remote');
-const { dialog } = remote;
+const { dialog } = require('@electron/remote');
 const fs = require('fs');
 
 async function choosePath() {

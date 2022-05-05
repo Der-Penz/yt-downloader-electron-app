@@ -190,8 +190,6 @@ button:is(:focus, :hover),
 input[type='range'] {
 	width: 100%;
 	position: relative;
-	/* just until it works */
-	display: none;
 }
 
 /* Track Styles */
