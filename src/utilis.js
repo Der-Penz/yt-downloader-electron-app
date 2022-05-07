@@ -1,23 +1,46 @@
-const progressContainer = document.querySelector('.progress-container');
-const progressDiv = document.querySelector('.progress');
-const progressText = document.querySelector('.progress-text');
+const PROGRESS_ELEMENTS = {
+	container: document.querySelector('.progress-container'),
+	div: document.querySelector('.progress'),
+	text: document.querySelector('.progress-text'),
+};
 
-function formatSeconds(seconds) {
-    var date = new Date(0);
-    date.setSeconds(seconds);
-    return date.toISOString().substr(12, 7);
+export function formatSeconds(seconds) {
+	var date = new Date(0);
+	date.setSeconds(seconds);
+	return date.toISOString().substr(12, 7);
 }
 
 function toMegaByte(bytes) {
-    return parseFloat(bytes / 1024 / 1024).toFixed(2);
+	return parseFloat(bytes / 1024 / 1024).toFixed(2);
 }
 
-function updateProgress(progress, downloaded = [0, 0], showProgress, time = 0) {
-    const asMegaByte = downloaded.map( byte => toMegaByte(byte) + "MB" );
+export function updateProgress(
+	progress,
+	downloaded = [0, 0],
+	showProgress,
+	time = 0
+) {
+	const asMegaByte = downloaded.map((byte) => toMegaByte(byte) + 'MB');
 
-    progressContainer.style.display = showProgress ? 'flex' : 'none';
-	progressDiv.style.width = `${Math.round(progress)}%`;
-    progressText.innerText = `${Math.round(progress)}% | ${asMegaByte[0]} / ${asMegaByte[1]} | ${(time / 1000).toFixed(2)}s`;
+	PROGRESS_ELEMENTS.container.style.display = showProgress ? 'flex' : 'none';
+	PROGRESS_ELEMENTS.div.style.width = `${Math.round(progress)}%`;
+	PROGRESS_ELEMENTS.text.innerText = `${Math.round(progress)}% | ${
+		asMegaByte[0]
+	} / ${asMegaByte[1]} | ${(time / 1000).toFixed(2)}s`;
 }
 
-export { formatSeconds, updateProgress};
+export function sortFormats(formats) {
+	return formats
+		.filter((format) => format.hasVideo == true && format.quality != 'tiny')
+		.sort((a, b) => {
+			var qualA = parseInt(a.qualityLabel);
+			var qualB = parseInt(b.qualityLabel);
+			if (qualA < qualB) {
+				return 1;
+			}
+			if (qualA > qualB) {
+				return -1;
+			}
+			return 0;
+		});
+}

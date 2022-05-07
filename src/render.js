@@ -10,228 +10,148 @@ import {
 import { showError, showInfo } from './notification.js';
 import { choosePath, getStoragePath, doesFileExist } from './explorerPath.js';
 import { formatSeconds } from './utilis.js';
+import {
+	setInformation,
+	getTitle,
+	showSettingsUI,
+	getInput,
+	resetInput,
+	clearInput,
+	resetTimeline,
+	setFormats,
+	getDownloadType,
+	getSelectedRange,
+} from './uiHandler.js';
 
 const remote = require('@electron/remote');
 const window = remote.getCurrentWindow();
 
-const inputURL = document.querySelector('.url-input');
 const loadButton = document.querySelector('.load');
-const closeButton = document.querySelector('.close');
-const settingsButton = document.querySelector('.settings');
-const settingsOpenButton = document.querySelector('.settings-open');
-const settingsCloseButton = document.querySelector('.settings-close');
-const choosePathButton = document.querySelector('.base-path');
-const thumbnail = document.querySelector('.thumbnail');
-const videoTitle = document.querySelector('.video-title');
-const videoCreator = document.querySelector('.creator');
-const timesStart = document.querySelector('.times .start');
-const timesEnd = document.querySelector('.times .end');
-const timelineStart = document.querySelector('.timeline .start');
-const timelineEnd = document.querySelector('.timeline .end');
-const formatSelection = document.querySelector('.selection-quality');
 const downloadButton = document.querySelector('.download');
-const videoLink = document.querySelector('.video-link');
+const closeButton = document.querySelector('.close');
+const choosePathButton = document.querySelector('.base-path');
 
-let videoLoaded = false;
-let downloading = false;
-let videoURL = '';
-const VIDEO_MIN_LENGTH = 1;
-const MAX_VIDEO_TITLE_LENGTH = 50;
+let downloadInProgress = false;
+const URLS = {
+	video: '',
+	playlist: '',
+};
 
-//#region Event Listeners
+//handle the load button
 loadButton.addEventListener('click', () => {
-	const value = inputURL.value;
+	const value = getInput();
 
-	if (value.includes('watch?v=')){
-		videoURL = value;
-		if (!isValidVideoURL(videoURL)) {
-			showError('Please enter a valid Video URL');
-			return;
-		}
+	//check if the URL is a valid video URL
+	if (isValidVideoURL(value)) {
+		URLS.video = value;
 
-		inputURL.value = '';
-		inputURL.placeholder = 'Enter a alternative file name';
-		addVideo(videoURL);
+		clearInput();
+		addVideo(URLS.video);
 	}
-	if (value.includes('playlist?list=')){
-		const playlistURL = value;
-		if (!isValidPlaylistURL(playlistURL)) {
-			showError('Please enter a valid Playlist URL');
-			return;
-		}
-		inputURL.value = '';
-		inputURL.placeholder = 'Enter a alternative file name';
-		addPlaylist(playlistURL);
+	//check if the URl is a valid playlist URL
+	if (isValidPlaylistURL(value)) {
+		URLS.playlist = value;
+
+		clearInput();
+		addPlaylist(URLS.playlist);
 	}
 });
 
+//handle the download button
 downloadButton.addEventListener('click', () => {
-	if (!videoLoaded) {
-		showError('Please load a video first');
+	if (!URLS.video && !URLS.playlist) {
+		showError('Please load a video or playlist first');
 		return;
 	}
 
-	const title =
-		inputURL.value ||
-		videoTitle.innerText.substring(0, MAX_VIDEO_TITLE_LENGTH);
-
-	downloadCurrent(videoURL, title.replace(/([^a-z0-9 - (%!&=)]+)/gi, '-'));
+	downloadCurrent(URLS.video || URLS.playlist, getTitle());
 });
 
+//close window
 closeButton.addEventListener('click', () => {
 	window.close();
 });
 
-timelineStart.addEventListener('input', () => {
-	const valueStart = parseInt(timelineStart.value);
-	const valueEnd = parseInt(timelineEnd.value);
-
-	if (valueEnd - valueStart <= VIDEO_MIN_LENGTH)
-		timelineStart.value = parseInt(timelineEnd.value) - VIDEO_MIN_LENGTH;
-
-	updateTimeline();
-});
-
-timelineEnd.addEventListener('input', () => {
-	const valueStart = parseInt(timelineStart.value);
-	const valueEnd = parseInt(timelineEnd.value);
-
-	if (valueEnd - valueStart <= VIDEO_MIN_LENGTH)
-		timelineEnd.value = parseInt(timelineStart.value) + VIDEO_MIN_LENGTH;
-
-	updateTimeline();
-});
-
-settingsOpenButton.addEventListener('click', () => {
-	settingsButton.setAttribute('state', 'closed');
-});
-
-settingsCloseButton.addEventListener('click', () => {
-	settingsButton.setAttribute('state', 'opened');
-});
-
 choosePathButton.addEventListener('click', () => {
-	choosePath().then((path) => showInfo('Path changed to'));
+	choosePath().then((path) => showInfo(`Path changed to ${path}`));
 });
 
-//#endregion
+async function addVideo(url) {
+	showSettingsUI('video');
 
-async function addVideo(URL) {
-	const videoInformation = await getVideoInfo(URL);
+	//get the video information
+	const {
+		formats,
+		videoDetails: {
+			title,
+			author: { name: creator },
+			video_url,
+			thumbnails,
+			lengthSeconds,
+		},
+	} = await getVideoInfo(url);
 
-	const videoFormats = videoInformation.formats
-		.filter((format) => format.hasVideo == true && format.quality != 'tiny')
-		.sort((a, b) => {
-			var qualA = parseInt(a.qualityLabel);
-			var qualB = parseInt(b.qualityLabel);
-			if (qualA < qualB) {
-				return 1;
-			}
-			if (qualA > qualB) {
-				return -1;
-			}
-			return 0;
-		});
+	setInformation(title, creator, thumbnails[0].url, video_url);
+	resetTimeline(lengthSeconds);
+	setFormats(formats);
 
-	//setting the html elements
-	thumbnail.src =
-		videoInformation.player_response.videoDetails.thumbnail.thumbnails[0].url;
-	videoTitle.innerText = videoInformation.player_response.videoDetails.title;
-	videoCreator.innerText = `from - ${videoInformation.player_response.videoDetails.author}`;
-
-	//timeline
-	const videoLength =
-		videoInformation.player_response.videoDetails.lengthSeconds;
-	timelineStart.min = 0;
-	timelineEnd.min = 0;
-	timelineStart.max = videoLength;
-	timelineEnd.max = videoLength;
-	timelineStart.value = timelineStart.min;
-	timelineEnd.value = timelineEnd.max;
-
-	videoLink.href = URL;
-
-	//formats
-	formatSelection.innerHTML = '';
-	const highestOption = document.createElement('option');
-	highestOption.value = 'highestvideo';
-	highestOption.innerText = 'Highest Quality';
-	formatSelection.appendChild(highestOption);
-
-	videoFormats.forEach((format) => {
-		const option = document.createElement('option');
-		option.value = format.itag;
-		option.innerText = format.qualityLabel;
-		formatSelection.appendChild(option);
-	});
-
-	updateTimeline();
-
-	videoLoaded = true;
 	showInfo('Video loaded');
 }
 
-async function addPlaylist(URL){
-	console.log("Loading Playlist ", URL);
-	const playlistInformation = await getPlaylistInfo(URL);
-	console.log(playlistInformation);
+async function addPlaylist(url) {
+	showSettingsUI('playlist');
 
-	thumbnail.src = playlistInformation.bestThumbnail.url;
-	videoTitle.innerText = playlistInformation.title;
-	videoCreator.innerText = playlistInformation.author.name;
-	videoLink.href = playlistInformation.url;
+	const playlistInformation = await getPlaylistInfo(url);
+
+	const {
+		title,
+		author: { name },
+		url: videoURL,
+		bestThumbnail: { url: thumbnailURL },
+	} = playlistInformation;
+
+	setInformation(title, name, thumbnailURL, videoURL);
 }
 
 function downloadCurrent(url, fileName) {
-	if (downloading) {
+	if (downloadInProgress) {
 		showError('A Download is already in progress');
 		return;
 	}
 
-	const filePath = getStoragePath();
+	const path = getStoragePath();
+	const downloadType = getDownloadType();
 
-	const downloadType = document.querySelector(
-		'input[name="download-type"]:checked'
-	).value;
-
-	if (doesFileExist(filePath, fileName, downloadType)) {
+	if (doesFileExist(path, fileName, downloadType)) {
 		showError('File already exists, choose a different name');
 		return;
 	}
-	
-	downloading = true;
+
+	downloadInProgress = true;
+
+	const { min, max, valueMin, valueMax } = getSelectedRange();
 
 	//if no range is selected, download the whole video
-	if(timelineStart.min == timelineStart.value && timelineEnd.max == timelineEnd.value){
-		if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
+	if (min === valueMin && max === valueMax) {
+		if (downloadType === 'mp3') downloadAudio(url, path, fileName);
 		else if (downloadType === 'mp4') {
-			let format = document.querySelector('.selection-quality').value;
-			downloadVideo(url, filePath, fileName, format);
+			downloadVideo(url, path, fileName, getFormat());
 		}
 	}
 	//if a range is selected, download the selected range
-	else{
-		const valueStart = formatSeconds(timelineStart.value);
-		const valueEnd = formatSeconds(timelineEnd.value);
-		downloadPartly(url, filePath, fileName, downloadType, valueStart, valueEnd);
+	else {
+		const valueStart = formatSeconds(valueMin);
+		const valueEnd = formatSeconds(valueMax);
+		downloadPartly(url, path, fileName, downloadType, valueStart, valueEnd);
 	}
-		
-
-
-	
-}
-
-function updateTimeline() {
-	timesStart.innerText = `${formatSeconds(timelineStart.value)}s`;
-	timesEnd.innerText = `${formatSeconds(timelineEnd.value)}s`;
 }
 
 function resetDownload() {
 	showInfo('Ready for a new download', 1500);
-	downloading = false;
-	inputURL.value = videoURL;
-	inputURL.placeholder = 'Paste Video-URL here';
-	videoLoaded = false;
+	resetInput(URLS.video || URLS.playlist);
+	setInformation('Video title ...', 'from - ...', 'placeholder.png', '');
+	URLS.video = URLS.playlist = '';
+	downloadInProgress = false;
 }
 
 export { resetDownload };
