@@ -1,56 +1,46 @@
-import { updateProgress } from './utilis.js';
+import { toggleProgress, updateProgress } from './uiHandler.js';
 import { showSuccess } from './notification.js';
 import { resetDownload } from './render.js';
 
-const cp = require('child_process');
 const ytdl = require('ytdl-core');
 const ytpl = require('ytpl');
 const fs = require('fs');
-const readline = require('readline');
+const cp = require('child_process');
 const ffmpegStatic = require('ffmpeg-static');
-
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfmpegPath(ffmpegStatic);
 
-const UPDATE_PERIOD = 100;
-let updated = false;
-
-async function downloadVideo(url, filePath, title, format) {
-	const tracker = {
-		audio: { downloaded: 0, total: Infinity },
-		video: { downloaded: 0, total: Infinity },
-		merged: { frame: 0, speed: '0x', fps: 0 },
+export async function downloadVideo(url, filePath, title, format = 'highestvideo') {
+	const progress = {
+		audio: { downloaded: 0, total: 0 },
+		video: { downloaded: 0, total: 0 },
 	};
 
-	// Get audio and video streams
 	const audioObject = ytdl(url, { quality: 'highestaudio' }).on(
 		'progress',
 		(chunkLength, downloaded, total) => {
-			tracker.audio = { downloaded, total };
+			progress.audio = { downloaded, total };
 		}
 	);
 	const videoObject = ytdl(url, { quality: format }).on(
 		'progress',
 		(chunkLength, downloaded, total) => {
-			tracker.video = { downloaded, total };
+			progress.video = { downloaded, total };
 		}
 	);
 
 	const startTime = Date.now();
 
-	updateProgress(0, undefined, true, 0);
+	toggleProgress(true);
+	updateProgress();
 
-	let progressInterval = null;
 	const showProgress = () => {
 		const alreadyDownloaded =
-			tracker.audio.downloaded + tracker.video.downloaded;
-		const totalDownload = tracker.audio.total + tracker.video.total;
+			progress.audio.downloaded + progress.video.downloaded;
+		const totalDownload = progress.audio.total + progress.video.total;
 
 		updateProgress(
-			(alreadyDownloaded / totalDownload) * 100,
 			[alreadyDownloaded, totalDownload],
-			true,
 			Date.now() - startTime
 		);
 	};
@@ -98,63 +88,29 @@ async function downloadVideo(url, filePath, title, format) {
 	);
 
 	ffmpegProcess.on('close', () => {
-		updateProgress(100, undefined, true, Date.now() - startTime);
-		setTimeout(() => {
-			updateProgress(0, undefined, false);
-		}, 1000);
-
-		showSuccess(
-			`Download complete! took ${(Date.now() - startTime) / 1000}s`,
-			4000
-		);
-		clearInterval(progressInterval);
-		resetDownload();
+		downloadComplete(startTime);
 	});
 
 	// Link streams
 	// FFmpeg creates the transformer streams and we just have to insert / read data
 	ffmpegProcess.stdio[3].on('data', (chunk) => {
-		if (!progressInterval) {
-			progressInterval = setInterval(() => {
-				showProgress();
-			}, UPDATE_PERIOD);
-		}
-		// Parse the param=value list returned by ffmpeg
-		const lines = chunk.toString().trim().split('\n');
-		const args = {};
-		for (const l of lines) {
-			const [key, value] = l.split('=');
-			args[key.trim()] = value.trim();
-		}
-		tracker.merged = args;
+		showProgress();
 	});
 	audioObject.pipe(ffmpegProcess.stdio[4]);
 	videoObject.pipe(ffmpegProcess.stdio[5]);
 }
 
-function downloadAudio(url, filePath, title) {
+export function downloadAudio(url, filePath, title) {
 	const videoObject = ytdl(url, {
 		quality: 'highestaudio',
 		filter: 'audio',
 	});
 
-	updateProgress(0, undefined, true);
+	toggleProgress(true);
+	updateProgress();
 
 	videoObject.on('progress', (chunkLength, downloaded, total) => {
-		const progress = downloaded / total;
-
-		if (!updated) {
-			updateProgress(
-				progress * 100,
-				[downloaded, total],
-				true,
-				Date.now() - startTime
-			);
-			updated = true;
-			setTimeout(() => {
-				updated = false;
-			}, UPDATE_PERIOD);
-		}
+		updateProgress([downloaded, total], Date.now() - startTime);
 	});
 
 	const startTime = Date.now();
@@ -163,20 +119,11 @@ function downloadAudio(url, filePath, title) {
 		.audioBitrate(128)
 		.save(`${filePath}/${title}.mp3`)
 		.on('end', () => {
-			updateProgress(100, undefined, true, Date.now() - startTime);
-			setTimeout(() => {
-				updateProgress(0, undefined, false);
-			}, 1000);
-
-			showSuccess(
-				`Download complete! took ${(Date.now() - startTime) / 1000}s`,
-				4000
-			);
-			resetDownload();
+			downloadComplete(startTime);
 		});
 }
 
-function downloadPartly(
+export function downloadPartly(
 	url,
 	filePath,
 	title,
@@ -188,17 +135,11 @@ function downloadPartly(
 
 	const startTime = Date.now();
 
-	updateProgress(0, undefined, true);
+	toggleProgress(true);
+	updateProgress();
 
 	videoObject.on('progress', (chunkLength, downloaded, total) => {
-		const progress = (downloaded / total) * 100;
-
-		updateProgress(
-			progress,
-			[downloaded, total],
-			true,
-			Date.now() - startTime
-		);
+		updateProgress([downloaded, total], Date.now() - startTime);
 	});
 
 	videoObject
@@ -236,14 +177,7 @@ function downloadPartly(
 				fs.rmSync(`${filePath}/tmp.mp4`, {
 					force: true,
 				});
-				updateProgress(100, [0, 0], true, Date.now() - startTime);
-				showSuccess(
-					`Download complete! took ${
-						(Date.now() - startTime) / 1000
-					}s`,
-					4000
-				);
-				resetDownload();
+				downloadComplete(startTime);
 			});
 
 			ffmpegProcess.stdio[4].pipe(
@@ -252,28 +186,31 @@ function downloadPartly(
 		});
 }
 
-async function getVideoInfo(url) {
+function downloadComplete(startTime) {
+	updateProgress([100, 100], Date.now() - startTime);
+	setTimeout(() => {
+		toggleProgress(false);
+		updateProgress();
+	}, 1000);
+	showSuccess(
+		`Download complete! took ${(Date.now() - startTime) / 1000}s`,
+		4000
+	);
+	resetDownload();
+}
+
+export async function getVideoInfo(url) {
 	return await ytdl.getInfo(url);
 }
 
-async function getPlaylistInfo(url) {
+export async function getPlaylistInfo(url) {
 	return await ytpl(url);
 }
 
-function isValidPlaylistURL(id) {
+export function isValidPlaylistURL(id) {
 	return ytpl.validateID(id);
 }
 
-function isValidVideoURL(url) {
+export function isValidVideoURL(url) {
 	return ytdl.validateURL(url);
 }
-
-export {
-	downloadVideo,
-	downloadAudio,
-	downloadPartly,
-	getVideoInfo,
-	isValidVideoURL,
-	isValidPlaylistURL,
-	getPlaylistInfo,
-};

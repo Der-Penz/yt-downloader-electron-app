@@ -135,6 +135,7 @@ button:is(:focus, :hover),
 
 .video-container {
 	flex-direction: row;
+	height: 23rem;
 }
 
 .thumbnail-container {

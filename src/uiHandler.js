@@ -1,4 +1,6 @@
-import { formatSeconds, sortFormats } from './utilis.js';
+import { choosePath } from './explorerPath.js';
+import { showInfo } from './notification.js';
+import { formatSeconds, sortFormats, toMegaByte } from './utilis.js';
 
 const VIDEO_MIN_LENGTH = 1;
 
@@ -27,8 +29,15 @@ const SETTINGS_ELEMENTS = {
 	close: document.querySelector('.settings-close'),
 };
 
+const PROGRESS_ELEMENTS = {
+	container: document.querySelector('.progress-container'),
+	div: document.querySelector('.progress'),
+	text: document.querySelector('.progress-text'),
+};
+
 const inputURL = document.querySelector('.url-input');
 const formatSelection = document.querySelector('.selection-quality');
+const choosePathButton = document.querySelector('.base-path');
 
 const MAX_VIDEO_TITLE_LENGTH = 50;
 
@@ -62,6 +71,11 @@ SETTINGS_ELEMENTS.open.addEventListener('click', () => {
 
 SETTINGS_ELEMENTS.close.addEventListener('click', () => {
 	SETTINGS_ELEMENTS.button.setAttribute('state', 'opened');
+});
+
+choosePathButton.addEventListener('click', async () => {
+	await choosePath();
+	showInfo(`Path changed`);
 });
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -150,9 +164,23 @@ export function setFormats(formats) {
 }
 
 export function getFormat() {
-	return formatSelection.value;
+	return formatSelection.value || 'highestvideo';
 }
 
 export function getDownloadType() {
 	return document.querySelector('input[name="download-type"]:checked').value;
+}
+
+export function toggleProgress(visible) {
+	PROGRESS_ELEMENTS.container.style.display = visible ? 'flex' : 'none';
+}
+
+export function updateProgress(progress = [0, 0], time = 0) {
+	const percent = Math.round((progress[0] / progress[1]) * 100) || 0;
+	const asMegaByte = progress.map((byte) => toMegaByte(byte) + 'MB');
+
+	PROGRESS_ELEMENTS.div.style.width = `${percent}%`;
+	PROGRESS_ELEMENTS.text.innerText = `${percent}% | ${asMegaByte[0]} / ${
+		asMegaByte[1]
+	} | ${(time / 1000).toFixed(2)}s`;
 }

@@ -1,7 +1,7 @@
 const { dialog } = require('@electron/remote');
 const fs = require('fs');
 
-async function choosePath() {
+export async function choosePath() {
 	const { filePaths } = await dialog.showOpenDialog({
 		defaultPath: getStoragePath(),
 		properties: ['openDirectory'],
@@ -15,14 +15,12 @@ async function choosePath() {
 	return path;
 }
 
-function getStoragePath() {
+export function getStoragePath() {
 	return (
 		localStorage.getItem('download-path') || remote.app.getPath('downloads')
 	);
 }
 
-function doesFileExist(filePath, title, extension) {
+export function doesFileExist(filePath, title, extension) {
 	return fs.existsSync(`${filePath}/${title}.${extension}`);
 }
-
-export { choosePath, getStoragePath, doesFileExist };
