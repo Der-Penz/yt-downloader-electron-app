@@ -38,7 +38,7 @@
 				<input
 					class="url-input"
 					type="text"
-					value="https://www.youtube.com/watch?v=FTomDc1krk8&list=RDFTomDc1krk8&start_radio=1"
+					value="https://www.youtube.com/playlist?list=PLJZYdYUkrqKICFafYh-m9AYIIQ3mt32lx"
 					placeholder="Paste Video-URL here"
 					onClick="this.setSelectionRange(0, this.value.length)"
 				/>
@@ -62,7 +62,7 @@
 		
 	  		<div class="download-options">
 
-		        <div class="times settings-video" title="Time">
+		        <div class="times settings-video hidden" title="Time">
 
 					<div class="timer-times">
 
@@ -78,8 +78,9 @@
 			        </div>
 				</div>
 
-				<div class="settings-playlist hidden" title="Count">
-					Hello
+				<div class="counts settings-playlist hidden" title="Count">
+					<label for="count-of-videos" class="count-label">0/0 Videos</label>
+					<input type="range" name="count-of-videos" class="count-range" min="1" max="1" value="1">
 				</div>
 
 				<div class="download-type" title="Format">

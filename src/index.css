@@ -224,8 +224,22 @@ input[type='range']:focus::-webkit-slider-runnable-track {
 	right: 0rem;
 } */
 
+.counts{
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	flex-direction: column;
+}
+
+.count-label{
+	font-size: 1.2rem;
+	letter-spacing: 200%;
+	padding: 0.2rem 0rem;
+}
+
 .download-type,
-.times {
+.times,
+.counts {
 	border: 0.2rem solid var(--bg-primary);
 	border-radius: 0.5rem;
 	padding: 0.5rem;
@@ -234,7 +248,8 @@ input[type='range']:focus::-webkit-slider-runnable-track {
 }
 
 .download-type::before,
-.times::before {
+.times::before,
+.counts::before {
 	position: absolute;
 	content: attr(title);
 	top: -0.8rem;

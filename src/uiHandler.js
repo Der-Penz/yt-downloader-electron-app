@@ -35,6 +35,11 @@ const PROGRESS_ELEMENTS = {
 	text: document.querySelector('.progress-text'),
 };
 
+const PLAYLIST_ELEMENTS = {
+	label: document.querySelector('.count-label'),
+	range: document.querySelector('.count-range'),
+}
+
 const inputURL = document.querySelector('.url-input');
 const formatSelection = document.querySelector('.selection-quality');
 const choosePathButton = document.querySelector('.base-path');
@@ -76,6 +81,10 @@ SETTINGS_ELEMENTS.close.addEventListener('click', () => {
 choosePathButton.addEventListener('click', async () => {
 	await choosePath();
 	showInfo(`Path changed`);
+});
+
+PLAYLIST_ELEMENTS.range.addEventListener('input', (e) => {
+	setPlaylistCount(e.target.value, e.target.max);
 });
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -184,3 +193,19 @@ export function updateProgress(progress = [0, 0], time = 0) {
 		asMegaByte[1]
 	} | ${(time / 1000).toFixed(2)}s`;
 }
+
+export function getPlaylistCount() {
+	return parseInt(PLAYLIST_ELEMENTS.range.value);
+}
+
+export function resetPlaylistCount(max){
+	PLAYLIST_ELEMENTS.range.min = 1;
+	PLAYLIST_ELEMENTS.range.max = max;
+	PLAYLIST_ELEMENTS.range.value = 1;
+	PLAYLIST_ELEMENTS.label.innerText = `${1}/${max} Videos`; 
+}
+
+function setPlaylistCount(count, max){
+	PLAYLIST_ELEMENTS.label.innerText = `${count}/${max} Videos`; 
+}
+

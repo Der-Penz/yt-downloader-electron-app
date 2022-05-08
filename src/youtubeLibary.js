@@ -10,31 +10,63 @@ const ffmpegStatic = require('ffmpeg-static');
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegStatic);
 
-export async function downloadVideo(url, filePath, title, format = 'highestvideo') {
+export function downloadVideo(
+	url,
+	filePath,
+	title,
+	format = 'highestvideo'
+) {
 	const progress = {
 		audio: { downloaded: 0, total: 0 },
 		video: { downloaded: 0, total: 0 },
 	};
 
-	const audioObject = ytdl(url, { quality: 'highestaudio' }).on(
-		'progress',
-		(chunkLength, downloaded, total) => {
-			progress.audio = { downloaded, total };
-		}
-	);
-	const videoObject = ytdl(url, { quality: format }).on(
-		'progress',
-		(chunkLength, downloaded, total) => {
-			progress.video = { downloaded, total };
-		}
-	);
+	const audioObject = ytdl(url, { quality: 'highestaudio' });
+	audioObject.on('progress', (_, downloaded, total) => {
+		progress.audio = { downloaded, total };
+	});
+
+	const videoObject = ytdl(url, { quality: format });
+	videoObject.on('progress', (_, downloaded, total) => {
+		progress.video = { downloaded, total };
+	});
 
 	const startTime = Date.now();
 
 	toggleProgress(true);
 	updateProgress();
 
-	const showProgress = () => {
+	const ffmpegProcess = cp.spawn(
+		ffmpegStatic,
+		[
+			'-loglevel',
+			'8',
+			'-hide_banner',
+			'-progress',
+			'pipe:3',
+			'-i',
+			'pipe:4',
+			'-i',
+			'pipe:5',
+			'-map',
+			'0:a',
+			'-map',
+			'1:v',
+			'-c:v',
+			'copy',
+			`${filePath}/${title}.mp4`,
+		],
+		{
+			windowsHide: true,
+			stdio: ['inherit', 'inherit', 'inherit', 'pipe', 'pipe', 'pipe'],
+		}
+	);
+
+	ffmpegProcess.on('close', () => {
+		downloadComplete(startTime);
+	});
+
+	ffmpegProcess.stdio[3].on('data', (_) => {
 		const alreadyDownloaded =
 			progress.audio.downloaded + progress.video.downloaded;
 		const totalDownload = progress.audio.total + progress.video.total;
@@ -43,58 +75,6 @@ export async function downloadVideo(url, filePath, title, format = 'highestvideo
 			[alreadyDownloaded, totalDownload],
 			Date.now() - startTime
 		);
-	};
-
-	// Start the ffmpeg child process
-	const ffmpegProcess = cp.spawn(
-		ffmpegStatic,
-		[
-			// Remove ffmpeg's console spamming
-			'-loglevel',
-			'8',
-			'-hide_banner',
-			// Redirect/Enable progress messages
-			'-progress',
-			'pipe:3',
-			// Set inputs
-			'-i',
-			'pipe:4',
-			'-i',
-			'pipe:5',
-			// Map audio & video from streams
-			'-map',
-			'0:a',
-			'-map',
-			'1:v',
-			// Keep encoding
-			'-c:v',
-			'copy',
-			// Define output file
-			`${filePath}/${title}.mp4`,
-		],
-		{
-			windowsHide: true,
-			stdio: [
-				/* Standard: stdin, stdout, stderr */
-				'inherit',
-				'inherit',
-				'inherit',
-				/* Custom: pipe:3, pipe:4, pipe:5 */
-				'pipe',
-				'pipe',
-				'pipe',
-			],
-		}
-	);
-
-	ffmpegProcess.on('close', () => {
-		downloadComplete(startTime);
-	});
-
-	// Link streams
-	// FFmpeg creates the transformer streams and we just have to insert / read data
-	ffmpegProcess.stdio[3].on('data', (chunk) => {
-		showProgress();
 	});
 	audioObject.pipe(ffmpegProcess.stdio[4]);
 	videoObject.pipe(ffmpegProcess.stdio[5]);
@@ -109,7 +89,7 @@ export function downloadAudio(url, filePath, title) {
 	toggleProgress(true);
 	updateProgress();
 
-	videoObject.on('progress', (chunkLength, downloaded, total) => {
+	videoObject.on('progress', (_, downloaded, total) => {
 		updateProgress([downloaded, total], Date.now() - startTime);
 	});
 
@@ -138,12 +118,12 @@ export function downloadPartly(
 	toggleProgress(true);
 	updateProgress();
 
-	videoObject.on('progress', (chunkLength, downloaded, total) => {
+	videoObject.on('progress', (_, downloaded, total) => {
 		updateProgress([downloaded, total], Date.now() - startTime);
 	});
 
 	videoObject
-		.pipe(fs.createWriteStream(`${filePath}/tmp.mp4`))
+		.pipe(fs.createWriteStream(`${filePath}/tmp.${downloadType}`))
 		.on('finish', () => {
 			const ffmpegProcess = cp.spawn(
 				ffmpegStatic,
@@ -154,7 +134,7 @@ export function downloadPartly(
 					'-progress',
 					'pipe:3',
 					'-i',
-					`${filePath}/tmp.mp4`,
+					`${filePath}/tmp.${downloadType}`,
 					'-vcodec',
 					'copy',
 					'-acodec',
@@ -174,24 +154,20 @@ export function downloadPartly(
 			);
 
 			ffmpegProcess.on('close', () => {
-				fs.rmSync(`${filePath}/tmp.mp4`, {
+				fs.rmSync(`${filePath}/tmp.${downloadType}`, {
 					force: true,
 				});
 				downloadComplete(startTime);
 			});
 
 			ffmpegProcess.stdio[4].pipe(
-				fs.createWriteStream(`${filePath}/${title}.mp4`)
+				fs.createWriteStream(`${filePath}/${title}.${downloadType}`)
 			);
 		});
 }
 
 function downloadComplete(startTime) {
 	updateProgress([100, 100], Date.now() - startTime);
-	// setTimeout(() => {
-	// 	toggleProgress(false);
-	// 	updateProgress();
-	// }, 1000);
 	showSuccess(
 		`Download complete! took ${(Date.now() - startTime) / 1000}s`,
 		4000

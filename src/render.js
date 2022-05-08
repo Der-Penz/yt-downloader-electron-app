@@ -23,6 +23,7 @@ import {
 	getSelectedRange,
 	getFormat,
 	toggleProgress,
+	resetPlaylistCount,
 } from './uiHandler.js';
 
 const remote = require('@electron/remote');
@@ -50,7 +51,7 @@ loadButton.addEventListener('click', () => {
 		addVideo(URLS.video);
 	}
 	//check if the URl is a valid playlist URL
-	if (isValidPlaylistURL(value)) {
+	else if (isValidPlaylistURL(value)) {
 		URLS.playlist = value;
 
 		clearInput();
@@ -108,6 +109,8 @@ async function addPlaylist(url) {
 	} = playlistInformation;
 
 	setInformation(title, name, thumbnailURL, videoURL);
+	console.log(playlistInformation);
+	resetPlaylistCount(playlistInformation.items.length);
 }
 
 async function downloadCurrent(url, fileName) {
@@ -159,14 +162,11 @@ function downloadSingle(url, filePath, fileName, downloadType) {
 	if (min === valueMin && max === valueMax) {
 		if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
 		else if (downloadType === 'mp4') {
-			downloadVideo(url, filePath, fileName, getFormat()).then(() =>
-				console.log('then')
-			);
+			downloadVideo(url, filePath, fileName, getFormat());
 		}
 	}
 	//if a range is selected, download the selected range
 	else {
-		console.log(downloadType);
 		const valueStart = formatSeconds(valueMin);
 		const valueEnd = formatSeconds(valueMax);
 		downloadPartly(
