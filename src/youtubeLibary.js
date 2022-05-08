@@ -188,10 +188,10 @@ export function downloadPartly(
 
 function downloadComplete(startTime) {
 	updateProgress([100, 100], Date.now() - startTime);
-	setTimeout(() => {
-		toggleProgress(false);
-		updateProgress();
-	}, 1000);
+	// setTimeout(() => {
+	// 	toggleProgress(false);
+	// 	updateProgress();
+	// }, 1000);
 	showSuccess(
 		`Download complete! took ${(Date.now() - startTime) / 1000}s`,
 		4000

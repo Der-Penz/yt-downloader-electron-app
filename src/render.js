@@ -22,6 +22,7 @@ import {
 	getDownloadType,
 	getSelectedRange,
 	getFormat,
+	toggleProgress,
 } from './uiHandler.js';
 
 const remote = require('@electron/remote');
@@ -141,7 +142,7 @@ async function downloadPlaylist(filePath, titleAddition, downloadType) {
 	).substring(0, 50);
 	title.replace(/([^a-z0-9 - (%!&=)]+)/gi, '-');
 	const url = URLS.playlistURLS[i].url;
-	console.log('downloading ', url);
+
 	if (doesFileExist(filePath, title, downloadType)) {
 		title += i;
 	}
@@ -193,6 +194,9 @@ export function resetDownload() {
 		}
 	}
 
+	setTimeout(() => {
+		toggleProgress(false);
+	}, 500);
 	resetInput(URLS.video || URLS.playlist);
 	setInformation('Video title ...', 'from - ...', 'placeholder.png', '');
 	URLS.video = URLS.playlist = '';
