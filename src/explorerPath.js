@@ -1,4 +1,4 @@
-const { dialog } = require('@electron/remote');
+const { dialog, app} = require('@electron/remote');
 const fs = require('fs');
 
 export async function choosePath() {
@@ -8,16 +8,16 @@ export async function choosePath() {
 		title: 'Select folder to store files.',
 	});
 
-	if (filePaths.length < 0) return null;
+	if (filePaths.length < 1) return null;
 
-	const path = filePaths[0];
+	const path = filePaths[0] || localStorage.getItem('download-path') || app.getPath('downloads');
 	localStorage.setItem('download-path', path);
 	return path;
 }
 
 export function getStoragePath() {
 	return (
-		localStorage.getItem('download-path') || remote.app.getPath('downloads')
+		localStorage.getItem('download-path') || app.getPath('downloads')
 	);
 }
 

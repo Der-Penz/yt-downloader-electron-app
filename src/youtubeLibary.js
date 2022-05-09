@@ -14,7 +14,8 @@ export function downloadVideo(
 	url,
 	filePath,
 	title,
-	format = 'highestvideo'
+	format = 'highestvideo',
+	cb
 ) {
 	const progress = {
 		audio: { downloaded: 0, total: 0 },
@@ -32,6 +33,7 @@ export function downloadVideo(
 	});
 
 	const startTime = Date.now();
+	const fullPath = `${filePath}/${title}.mp4`;
 
 	toggleProgress(true);
 	updateProgress();
@@ -54,7 +56,7 @@ export function downloadVideo(
 			'1:v',
 			'-c:v',
 			'copy',
-			`${filePath}/${title}.mp4`,
+			fullPath,
 		],
 		{
 			windowsHide: true,
@@ -63,7 +65,8 @@ export function downloadVideo(
 	);
 
 	ffmpegProcess.on('close', () => {
-		downloadComplete(startTime);
+		if (cb) cb(fullPath, startTime);
+		else downloadComplete(startTime);
 	});
 
 	ffmpegProcess.stdio[3].on('data', (_) => {
@@ -80,7 +83,7 @@ export function downloadVideo(
 	videoObject.pipe(ffmpegProcess.stdio[5]);
 }
 
-export function downloadAudio(url, filePath, title) {
+export function downloadAudio(url, filePath, title, cb) {
 	const videoObject = ytdl(url, {
 		quality: 'highestaudio',
 		filter: 'audio',
@@ -94,12 +97,14 @@ export function downloadAudio(url, filePath, title) {
 	});
 
 	const startTime = Date.now();
+	const fullPath = `${filePath}/${title}.mp3`;
 
 	ffmpeg(videoObject)
 		.audioBitrate(128)
-		.save(`${filePath}/${title}.mp3`)
+		.save(fullPath)
 		.on('end', () => {
-			downloadComplete(startTime);
+			if (cb) cb(fullPath, startTime);
+			else downloadComplete(startTime);
 		});
 }
 
@@ -108,62 +113,57 @@ export function downloadPartly(
 	filePath,
 	title,
 	downloadType,
+	format,
 	timeStart = '0:01:00',
 	timeDuration = '0:00:10'
 ) {
-	const videoObject = ytdl(url);
+	function cb(fullPath, startTime) {
 
-	const startTime = Date.now();
+		const ffmpegProcess = cp.spawn(
+			ffmpegStatic,
+			[
+				'-y',
+				'-v',
+				'error',
+				'-progress',
+				'pipe:3',
+				'-i',
+				fullPath,
+				'-vcodec',
+				'copy',
+				'-acodec',
+				'copy',
+				'-ss',
+				timeStart,
+				'-t',
+				timeDuration,
+				// '-f',
+				'matroska',
+				'pipe:4',
+			],
+			{
+				windowsHide: true,
+				stdio: ['inherit', 'inherit', 'inherit', 'pipe', 'pipe'],
+			}
+		);
 
-	toggleProgress(true);
-	updateProgress();
-
-	videoObject.on('progress', (_, downloaded, total) => {
-		updateProgress([downloaded, total], Date.now() - startTime);
-	});
-
-	videoObject
-		.pipe(fs.createWriteStream(`${filePath}/tmp.${downloadType}`))
-		.on('finish', () => {
-			const ffmpegProcess = cp.spawn(
-				ffmpegStatic,
-				[
-					'-y',
-					'-v',
-					'error',
-					'-progress',
-					'pipe:3',
-					'-i',
-					`${filePath}/tmp.${downloadType}`,
-					'-vcodec',
-					'copy',
-					'-acodec',
-					'copy',
-					'-ss',
-					timeStart,
-					'-t',
-					timeDuration,
-					'-f',
-					'matroska',
-					'pipe:4',
-				],
-				{
-					windowsHide: true,
-					stdio: ['inherit', 'inherit', 'inherit', 'pipe', 'pipe'],
-				}
-			);
-
-			ffmpegProcess.on('close', () => {
-				fs.rmSync(`${filePath}/tmp.${downloadType}`, {
-					force: true,
-				});
-				downloadComplete(startTime);
+		ffmpegProcess.on('close', () => {
+			fs.rmSync(fullPath, {
+				force: true,
 			});
-
-			ffmpegProcess.stdio[4].pipe(
-				fs.createWriteStream(`${filePath}/${title}.${downloadType}`)
-			);
+			downloadComplete(startTime);
 		});
+
+		ffmpegProcess.stdio[4].pipe(
+			fs.createWriteStream(`${filePath}/${title}.${downloadType}`)
+		);
+	}
+
+	const tempTitle = 'tmp' + Date.now().toString();
+
+	if (downloadType === 'mp3') downloadAudio(url, filePath, tempTitle, cb);
+	else if (downloadType === 'mp4')
+		downloadVideo(url, filePath, tempTitle, format, cb);
 }
 
 function downloadComplete(startTime) {

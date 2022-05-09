@@ -79,8 +79,7 @@ SETTINGS_ELEMENTS.close.addEventListener('click', () => {
 });
 
 choosePathButton.addEventListener('click', async () => {
-	await choosePath();
-	showInfo(`Path changed`);
+	await choosePath() && showInfo(`Path changed`);
 });
 
 PLAYLIST_ELEMENTS.range.addEventListener('input', (e) => {
@@ -110,6 +109,9 @@ export function showSettingsUI(type) {
 	} else if (type === 'video') {
 		DOWNLOAD_SETTINGS_ELEMENTS.playlist.classList.add('hidden');
 		DOWNLOAD_SETTINGS_ELEMENTS.video.classList.remove('hidden');
+	}else{
+		DOWNLOAD_SETTINGS_ELEMENTS.playlist.classList.add('hidden');
+		DOWNLOAD_SETTINGS_ELEMENTS.video.classList.add('hidden');
 	}
 }
 
@@ -162,6 +164,8 @@ export function setFormats(formats) {
 	highestOption.value = 'highestvideo';
 	highestOption.innerText = 'Highest Quality';
 	formatSelection.appendChild(highestOption);
+
+	if(!formats) return;
 
 	const sortedFormats = sortFormats(formats);
 	sortedFormats.forEach((format) => {

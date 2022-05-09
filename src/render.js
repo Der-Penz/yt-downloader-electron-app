@@ -24,6 +24,7 @@ import {
 	getFormat,
 	toggleProgress,
 	resetPlaylistCount,
+	getPlaylistCount,
 } from './uiHandler.js';
 
 const remote = require('@electron/remote');
@@ -100,7 +101,8 @@ async function addPlaylist(url) {
 	showSettingsUI('playlist');
 
 	const playlistInformation = await getPlaylistInfo(url);
-
+	URLS.playlistItems = playlistInformation.items;
+	URLS.index = 0;
 	const {
 		title,
 		author: { name },
@@ -108,8 +110,8 @@ async function addPlaylist(url) {
 		bestThumbnail: { url: thumbnailURL },
 	} = playlistInformation;
 
+ 	setFormats();
 	setInformation(title, name, thumbnailURL, videoURL);
-	console.log(playlistInformation);
 	resetPlaylistCount(playlistInformation.items.length);
 }
 
@@ -130,24 +132,21 @@ async function downloadCurrent(url, fileName) {
 	downloadInProgress = true;
 
 	if (URLS.playlist){
-		const {items} = await getPlaylistInfo(url);
-		URLS.playlistURLS = items;
 		URLS.index = 0;
-	 	downloadPlaylist(path, fileName, downloadType);
+		URLS.playlistItems = URLS.playlistItems.slice(0, getPlaylistCount());
+	 	downloadPlaylist(path, downloadType);
 	}	
 	if (URLS.video) downloadSingle(url, path, fileName, downloadType);
 }
 
-async function downloadPlaylist(filePath, titleAddition, downloadType) {
-	const i = URLS.index;
-	let title = (
-		URLS.playlistURLS[i].title + (titleAddition || '')
-	).substring(0, 50);
-	title.replace(/([^a-z0-9 - (%!&=)]+)/gi, '-');
-	const url = URLS.playlistURLS[i].url;
+async function downloadPlaylist(filePath, downloadType) {
+	const i = URLS.index++;
+	let title = URLS.playlistItems[i].title.substring(0, 50).replace(/([^a-z0-9 - (%!&=)]+)/gi, '-');
 
-	if (doesFileExist(filePath, title, downloadType)) {
-		title += i;
+	const url = URLS.playlistItems[i].url;
+
+	while(doesFileExist(filePath, title, downloadType)){
+		title += Math.random().toString().substring(2, 4);
 	}
 
 	if (downloadType === 'mp4')
@@ -162,6 +161,7 @@ function downloadSingle(url, filePath, fileName, downloadType) {
 	if (min === valueMin && max === valueMax) {
 		if (downloadType === 'mp3') downloadAudio(url, filePath, fileName);
 		else if (downloadType === 'mp4') {
+
 			downloadVideo(url, filePath, fileName, getFormat());
 		}
 	}
@@ -174,6 +174,7 @@ function downloadSingle(url, filePath, fileName, downloadType) {
 			filePath,
 			fileName,
 			downloadType,
+			getFormat(),
 			valueStart,
 			valueEnd
 		);
@@ -183,13 +184,12 @@ function downloadSingle(url, filePath, fileName, downloadType) {
 export function resetDownload() {
 	showInfo('Ready for a new download', 1500);
 	downloadInProgress = false;
-	if(URLS.playlistURLS){
-		URLS.index++;
-		if(URLS.index === URLS.playlistURLS.length){
-			delete URLS.playlistURLS;
+	if(URLS.playlistItems){
+		if(URLS.index === URLS.playlistItems.length){
+			delete URLS.playlistItems;
 			delete URLS.index;
 		}else{
-			downloadPlaylist(getStoragePath(), getTitle(), getDownloadType());
+			downloadPlaylist(getStoragePath(), getDownloadType());
 			return;
 		}
 	}
@@ -199,5 +199,6 @@ export function resetDownload() {
 	}, 500);
 	resetInput(URLS.video || URLS.playlist);
 	setInformation('Video title ...', 'from - ...', 'placeholder.png', '');
+	showSettingsUI();
 	URLS.video = URLS.playlist = '';
 }
