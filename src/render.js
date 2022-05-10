@@ -46,6 +46,9 @@ loadButton.addEventListener('click', () => {
 
 	//check if the URL is a valid video URL
 	if (isValidVideoURL(value)) {
+		delete URLS.playlistItems;
+		delete URLS.index;
+		URLS.playlist = '';
 		URLS.video = value;
 
 		clearInput();
@@ -53,6 +56,7 @@ loadButton.addEventListener('click', () => {
 	}
 	//check if the URl is a valid playlist URL
 	else if (isValidPlaylistURL(value)) {
+		URLS.video = '';
 		URLS.playlist = value;
 
 		clearInput();

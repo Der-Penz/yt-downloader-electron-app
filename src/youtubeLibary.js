@@ -114,49 +114,33 @@ export function downloadPartly(
 	title,
 	downloadType,
 	format,
-	timeStart = '0:01:00',
-	timeDuration = '0:00:10'
+	timeStart,
+	timeEnd
 ) {
 	function cb(fullPath, startTime) {
-
-		const ffmpegProcess = cp.spawn(
-			ffmpegStatic,
-			[
-				'-y',
-				'-v',
-				'error',
-				'-progress',
-				'pipe:3',
-				'-i',
-				fullPath,
-				'-vcodec',
-				'copy',
-				'-acodec',
-				'copy',
-				'-ss',
-				timeStart,
-				'-t',
-				timeDuration,
-				// '-f',
-				'matroska',
-				'pipe:4',
-			],
-			{
-				windowsHide: true,
-				stdio: ['inherit', 'inherit', 'inherit', 'pipe', 'pipe'],
-			}
-		);
+		const ffmpegProcess = cp.spawn(ffmpegStatic, [
+			'-i',
+			fullPath,
+			'-ss',
+			timeStart,
+			'-to',
+			timeEnd,
+			'-c:a',
+			'copy',
+			`${filePath}/${title}.${downloadType}`,
+		]);
 
 		ffmpegProcess.on('close', () => {
 			fs.rmSync(fullPath, {
 				force: true,
 			});
+
 			downloadComplete(startTime);
 		});
 
-		ffmpegProcess.stdio[4].pipe(
-			fs.createWriteStream(`${filePath}/${title}.${downloadType}`)
-		);
+		// ffmpegProcess.stdio[4].pipe(
+		// 	fs.createWriteStream(`${filePath}/${title}.${downloadType}`)
+		// );
 	}
 
 	const tempTitle = 'tmp' + Date.now().toString();
