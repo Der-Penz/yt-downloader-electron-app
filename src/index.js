@@ -9,9 +9,11 @@ const createWindow = () => {
 		width: 900,
 		height: 650,
 		resizable: false,
-		center: false,
+		movable: true,
+		center: true,
 		closable: true,
 		frame: false,
+		autoHideMenuBar: true,
 		hasShadow: false,
 		icon:  path.join(__dirname, 'icon.ico'),
 		webPreferences: {
@@ -20,8 +22,6 @@ const createWindow = () => {
 			enableRemoteModule: true,
 		},
 	});
-
-	mainWindow.setPosition(1000, 200);
 
 	require('@electron/remote/main').initialize();
 	require('@electron/remote/main').enable(mainWindow.webContents);

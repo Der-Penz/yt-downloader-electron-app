@@ -1,8 +1,8 @@
 {
   "name": "yt-downloader",
-  "productName": "yt-downloader",
+  "productName": "Youtube Downloader",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "A basic downloader for youtube videos and playlists, supporting audio and video formats.",
   "main": "src/index.js",
   "scripts": {
     "start": "electron-forge start",
@@ -55,10 +55,11 @@
     "fs": "^0.0.1-security",
     "readline": "^1.3.0",
     "ytdl": "^1.4.1",
+    "ytdl-core": "^4.11.2",
     "ytpl": "^2.3.0"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.63",
+    "@electron-forge/cli": "^6.0.4",
     "@electron-forge/maker-deb": "^6.0.0-beta.63",
     "@electron-forge/maker-rpm": "^6.0.0-beta.63",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.63",
